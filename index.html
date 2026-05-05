@@ -364,6 +364,11 @@
         return val === '' ? -1 : parseInt(val);
     };
 
+    // Helper: Validasi apakah string adalah SKU 5 digit numerik
+    const isFiveDigitSKU = (sku) => {
+        return /^\d{5}$/.test(sku);
+    };
+
     // Populate Select options dengan Index Array
     const populateSelect = (selectId, headersRow, maxCols, defaultIndex, addEmptyOption = false) => {
         const select = document.getElementById(selectId);
@@ -546,8 +551,12 @@
 
                 // Penentuan Nilai HPP Modal (Prioritas: CSV Link -> Data 1)
                 let hppModal = 0;
-                // PRIORITAS: Cek SKU Variasi (Kolom 6) terlebih dahulu, baru SKU Induk (Kolom 5)
-                if (keySku2 && hppMap.has(keySku2)) {
+                // PRIORITAS BARU: Cek SKU 5 digit dari Kolom 5 atau 6
+                if (isFiveDigitSKU(keySku2) && hppMap.has(keySku2)) {
+                    hppModal = hppMap.get(keySku2);
+                } else if (isFiveDigitSKU(keySku1) && hppMap.has(keySku1)) {
+                    hppModal = hppMap.get(keySku1);
+                } else if (keySku2 && hppMap.has(keySku2)) {
                     hppModal = hppMap.get(keySku2);
                 } else if (keySku1 && hppMap.has(keySku1)) {
                     hppModal = hppMap.get(keySku1);
