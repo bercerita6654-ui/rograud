@@ -45,7 +45,7 @@
                     </div>
                     <div>
                         <h2 class="font-semibold text-slate-800">Data 1 (Harga Awal)</h2>
-                        <p class="text-xs text-slate-500">Contoh: Data harga Master / Normal</p>
+                        <p class="text-xs text-slate-500">Mulai dari <strong>baris ke-7</strong>. Contoh: Data harga Master</p>
                     </div>
                 </div>
 
@@ -95,7 +95,7 @@
                     </div>
                     <div>
                         <h2 class="font-semibold text-slate-800">Data 2 (Harga Pembanding)</h2>
-                        <p class="text-xs text-slate-500">Contoh: Data harga Campaign / Diskon</p>
+                        <p class="text-xs text-slate-500">Mulai dari <strong>baris ke-4</strong>. Contoh: Data harga Diskon</p>
                     </div>
                 </div>
 
@@ -278,7 +278,13 @@
                 const workbook = XLSX.read(data, {type: 'array'});
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+                
+                // Konfigurasi Baris Mulai:
+                // SheetJS index dimulai dari 0.
+                // Data 1 baris ke 7 (index 6). Data 2 baris ke 4 (index 3).
+                const startRowIndex = isFile1 ? 6 : 3;
+
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '', range: startRowIndex });
                 
                 const headers = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
 
@@ -286,7 +292,7 @@
                     file1Data = jsonData;
                     file1Headers = headers;
                     document.getElementById('fileName1').textContent = file.name;
-                    document.getElementById('rowCount1').textContent = `${jsonData.length} baris`;
+                    document.getElementById('rowCount1').textContent = `${jsonData.length} baris (dari baris 7)`;
                     
                     // Defaults for Data 1 (Prod:col 1, Name:col 2, Var:col 3, Price:col 7)
                     populateSelect('selProd1', headers, 0, true);
@@ -300,7 +306,7 @@
                     file2Data = jsonData;
                     file2Headers = headers;
                     document.getElementById('fileName2').textContent = file.name;
-                    document.getElementById('rowCount2').textContent = `${jsonData.length} baris`;
+                    document.getElementById('rowCount2').textContent = `${jsonData.length} baris (dari baris 4)`;
                     
                     // Defaults for Data 2 (Name:col 1, Prod:col 2, Var:col 4, Price:col 11/12)
                     populateSelect('selName2', headers, 0, true);
@@ -315,7 +321,7 @@
 
                 checkBothFilesLoaded();
             } catch (error) {
-                alert("Gagal membaca file. Pastikan formatnya valid .xlsx atau .xls");
+                alert("Gagal membaca file. Pastikan formatnya valid .xlsx atau .xls, dan baris awalnya sesuai.");
                 console.error(error);
             }
         };
