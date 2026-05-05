@@ -227,7 +227,7 @@
                             <th class="py-3 px-4">Selisih</th>
                             <th class="py-3 px-4">
                                 Est. Profit & Margin
-                                <div class="text-[10px] text-slate-400 font-normal mt-0.5">Asumsi Data 1 = Modal</div>
+                                <div class="text-[10px] text-slate-400 font-normal mt-0.5">Modal: Data Link Eksternal</div>
                             </th>
                             <th class="py-3 px-4">Status</th>
                         </tr>
@@ -288,7 +288,7 @@
                         <th class="py-3 px-4">Selisih</th>
                         <th class="py-3 px-4">
                             Est. Profit & Margin
-                            <div class="text-[10px] text-slate-400 font-normal mt-0.5">Asumsi Data 1 = Modal</div>
+                            <div class="text-[10px] text-slate-400 font-normal mt-0.5">Modal: Data Link Eksternal</div>
                         </th>
                         <th class="py-3 px-4">Status</th>
                     </tr>
@@ -456,12 +456,46 @@
         }
     };
 
-    // Perform Analysis
-    btnAnalyze.addEventListener('click', () => {
+    // Perform Analysis & Fetch Data HPP
+    btnAnalyze.addEventListener('click', async () => {
         btnAnalyze.disabled = true;
-        btnText.textContent = "Memproses...";
+        btnText.textContent = "Mengambil Data HPP (Google Sheets)...";
         btnIcon.className = "ph ph-spinner animate-spin text-xl";
 
+        const hppMap = new Map();
+        
+        // 1. Fetch CSV HPP dari Link
+        try {
+            const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrRDnJctzeF3FC_-81KzNHZIX3epxC6WwdmIbhXBGl1rlRKvSUfsvsZCZtuiPyULe5b2wJXOIYK8hs/pub?gid=481142784&single=true&output=csv";
+            const response = await fetch(csvUrl);
+            const arrayBuffer = await response.arrayBuffer();
+            const data = new Uint8Array(arrayBuffer);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            const hppDataRows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ''});
+
+            // Mulai loop baris ke-2 (index 1)
+            for (let i = 1; i < hppDataRows.length; i++) {
+                const row = hppDataRows[i];
+                if (row && row.length > 0) {
+                    // SKU (Kolom A / index 0)
+                    const sku = String(row[0] || '').trim().toLowerCase();
+                    // HPP (Kolom H / index 7)
+                    const hppVal = parsePrice(row[7]);
+                    
+                    if (sku && hppVal > 0) {
+                        hppMap.set(sku, hppVal);
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Gagal mengambil data HPP dari CSV:", err);
+            // Peringatan ini muncul hanya di log agar alur tidak terhenti, sistem akan menggunakan Data 1 sebagai fallback
+        }
+
+        btnText.textContent = "Memproses Perbandingan Harga...";
+
+        // 2. Lakukan Analisa dengan Timeout tipis
         setTimeout(() => {
             const vProd1 = getVal('selProd1');
             const vName1 = getVal('selName1');
@@ -503,8 +537,21 @@
                 
                 const rawSku1 = vSku1 >= 0 ? String(row1[vSku1] || '').trim() : '';
                 const rawSku2 = vSku2 >= 0 ? String(row1[vSku2] || '').trim() : '';
+                const keySku1 = rawSku1.toLowerCase();
+                const keySku2 = rawSku2.toLowerCase();
+                
                 const name1 = vName1 >= 0 ? row1[vName1] : '';
                 const name2 = (row2 && vName2 >= 0) ? row2[vName2] : '';
+
+                // Penentuan Nilai HPP Modal (Prioritas: CSV Link -> Data 1)
+                let hppModal = 0;
+                if (keySku1 && hppMap.has(keySku1)) {
+                    hppModal = hppMap.get(keySku1);
+                } else if (keySku2 && hppMap.has(keySku2)) {
+                    hppModal = hppMap.get(keySku2);
+                } else {
+                    hppModal = price1; // Fallback ke Data 1 jika tidak ada SKU cocok
+                }
 
                 let diff = null;
                 let diffPct = 0;
@@ -529,6 +576,7 @@
                     name: name1 || name2 || `${rawProduct} ${rawVariation}`,
                     price1,
                     price2,
+                    hppModal,
                     diff,
                     diffPct,
                     status
@@ -580,11 +628,11 @@
             `;
         }
 
-        // Kalkulasi Profit & Margin (berdasarkan Data 2 Harga Jual vs Data 1 sbg Modal)
+        // Kalkulasi Profit & Margin (berdasarkan Data 2 Harga Jual vs HPP Link)
         let marginHtml = '-';
-        if (item.price2 !== null && item.price1 > 0) {
+        if (item.price2 !== null && item.hppModal > 0) {
             const hJual = item.price2;
-            const hModal = item.price1;
+            const hModal = item.hppModal;
             
             // Perhitungan Potongan
             // 11% admin + 12.5% Lyn Xtra + 0.5% Asuransi + 1% Affiliate = 25% (0.25)
@@ -623,6 +671,7 @@
                         <span class="px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${badgeClass}">${badgeText}</span>
                     </div>
                     <span class="text-[10px] text-slate-400 mt-0.5" title="Potongan: 25% (Admin, Lyn, Asuransi, Affiliate) + Rp2.600 (Packing & Proses)">Potongan: ${formatCurrency(potongan)}</span>
+                    <span class="text-[9px] text-slate-300 mt-0.5 border-t border-slate-100 pt-0.5" title="Harga Modal">HPP: ${formatCurrency(hModal)}</span>
                 </div>
             `;
         }
