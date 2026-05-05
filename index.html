@@ -88,11 +88,11 @@
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom SKU 1:</label>
+                                <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom SKU 1 (Induk):</label>
                                 <select id="selSku1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
                             </div>
                             <div>
-                                <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom SKU 2:</label>
+                                <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom SKU 2 (Variasi):</label>
                                 <select id="selSku2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
                             </div>
                         </div>
@@ -416,8 +416,8 @@
                     populateSelect('selProd1', headerRow, maxCols, 0, true); 
                     populateSelect('selName1', headerRow, maxCols, 1, true); 
                     populateSelect('selVar1', headerRow, maxCols, 2, true); 
-                    populateSelect('selSku1', headerRow, maxCols, 4, true); 
-                    populateSelect('selSku2', headerRow, maxCols, 5, true); 
+                    populateSelect('selSku1', headerRow, maxCols, 4, true);  // Default Kolom 5
+                    populateSelect('selSku2', headerRow, maxCols, 5, true);  // Default Kolom 6
                     populateSelect('selPrice1', headerRow, maxCols, 6, false); 
                     
                     dropzone1.classList.add('hidden');
@@ -478,9 +478,9 @@
             for (let i = 1; i < hppDataRows.length; i++) {
                 const row = hppDataRows[i];
                 if (row && row.length > 0) {
-                    // SKU (Kolom A / index 0)
+                    // SKU (Kolom A / index 0) pada file Google Sheet
                     const sku = String(row[0] || '').trim().toLowerCase();
-                    // HPP (Kolom H / index 7)
+                    // HPP (Kolom H / index 7) pada file Google Sheet
                     const hppVal = parsePrice(row[7]);
                     
                     if (sku && hppVal > 0) {
@@ -500,8 +500,8 @@
             const vProd1 = getVal('selProd1');
             const vName1 = getVal('selName1');
             const vVar1 = getVal('selVar1');
-            const vSku1 = getVal('selSku1');
-            const vSku2 = getVal('selSku2');
+            const vSku1 = getVal('selSku1'); // Kolom 5 Data 1 (SKU Induk)
+            const vSku2 = getVal('selSku2'); // Kolom 6 Data 1 (SKU Variasi)
             const vPrice1 = getVal('selPrice1');
 
             const vProd2 = getVal('selProd2');
@@ -537,20 +537,22 @@
                 
                 const rawSku1 = vSku1 >= 0 ? String(row1[vSku1] || '').trim() : '';
                 const rawSku2 = vSku2 >= 0 ? String(row1[vSku2] || '').trim() : '';
-                const keySku1 = rawSku1.toLowerCase();
-                const keySku2 = rawSku2.toLowerCase();
+                
+                const keySku1 = rawSku1.toLowerCase(); // Induk
+                const keySku2 = rawSku2.toLowerCase(); // Variasi
                 
                 const name1 = vName1 >= 0 ? row1[vName1] : '';
                 const name2 = (row2 && vName2 >= 0) ? row2[vName2] : '';
 
                 // Penentuan Nilai HPP Modal (Prioritas: CSV Link -> Data 1)
                 let hppModal = 0;
-                if (keySku1 && hppMap.has(keySku1)) {
-                    hppModal = hppMap.get(keySku1);
-                } else if (keySku2 && hppMap.has(keySku2)) {
+                // PRIORITAS: Cek SKU Variasi (Kolom 6) terlebih dahulu, baru SKU Induk (Kolom 5)
+                if (keySku2 && hppMap.has(keySku2)) {
                     hppModal = hppMap.get(keySku2);
+                } else if (keySku1 && hppMap.has(keySku1)) {
+                    hppModal = hppMap.get(keySku1);
                 } else {
-                    hppModal = price1; // Fallback ke Data 1 jika tidak ada SKU cocok
+                    hppModal = price1; // Fallback ke harga Data 1 jika tidak ada SKU yang cocok di g-sheet
                 }
 
                 let diff = null;
@@ -671,7 +673,7 @@
                         <span class="px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${badgeClass}">${badgeText}</span>
                     </div>
                     <span class="text-[10px] text-slate-400 mt-0.5" title="Potongan: 25% (Admin, Lyn, Asuransi, Affiliate) + Rp2.600 (Packing & Proses)">Potongan: ${formatCurrency(potongan)}</span>
-                    <span class="text-[9px] text-slate-300 mt-0.5 border-t border-slate-100 pt-0.5" title="Harga Modal">HPP: ${formatCurrency(hModal)}</span>
+                    <span class="text-[9px] text-slate-300 mt-0.5 border-t border-slate-100 pt-0.5" title="Harga Modal (HPP)">HPP: ${formatCurrency(hModal)}</span>
                 </div>
             `;
         }
