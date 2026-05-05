@@ -364,9 +364,10 @@
         return val === '' ? -1 : parseInt(val);
     };
 
-    // Helper: Validasi apakah string adalah SKU 5 digit numerik
-    const isFiveDigitSKU = (sku) => {
-        return /^\d{5}$/.test(sku);
+    // Helper untuk mengekstrak string 5 digit SKU dari teks apapun
+    const extract5DigitSKU = (str) => {
+        const match = String(str).match(/\b\d{5}\b/);
+        return match ? match[0] : null;
     };
 
     // Populate Select options dengan Index Array
@@ -461,47 +462,13 @@
         }
     };
 
-    // Perform Analysis & Fetch Data HPP
-    btnAnalyze.addEventListener('click', async () => {
+    // --- ALUR DUA TAHAP: BANDINGKAN DATA 1 & 2 DULU -> KEMUDIAN CEK GOOGLE SHEETS ---
+    btnAnalyze.addEventListener('click', () => {
         btnAnalyze.disabled = true;
-        btnText.textContent = "Mengambil Data HPP (Google Sheets)...";
+        btnText.textContent = "Memproses Perbandingan Data...";
         btnIcon.className = "ph ph-spinner animate-spin text-xl";
 
-        const hppMap = new Map();
-        
-        // 1. Fetch CSV HPP dari Link
-        try {
-            const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrRDnJctzeF3FC_-81KzNHZIX3epxC6WwdmIbhXBGl1rlRKvSUfsvsZCZtuiPyULe5b2wJXOIYK8hs/pub?gid=481142784&single=true&output=csv";
-            const response = await fetch(csvUrl);
-            const arrayBuffer = await response.arrayBuffer();
-            const data = new Uint8Array(arrayBuffer);
-            const workbook = XLSX.read(data, {type: 'array'});
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const hppDataRows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ''});
-
-            // Mulai loop baris ke-2 (index 1)
-            for (let i = 1; i < hppDataRows.length; i++) {
-                const row = hppDataRows[i];
-                if (row && row.length > 0) {
-                    // SKU (Kolom A / index 0) pada file Google Sheet
-                    const sku = String(row[0] || '').trim().toLowerCase();
-                    // HPP (Kolom H / index 7) pada file Google Sheet
-                    const hppVal = parsePrice(row[7]);
-                    
-                    if (sku && hppVal > 0) {
-                        hppMap.set(sku, hppVal);
-                    }
-                }
-            }
-        } catch (err) {
-            console.error("Gagal mengambil data HPP dari CSV:", err);
-            // Peringatan ini muncul hanya di log agar alur tidak terhenti, sistem akan menggunakan Data 1 sebagai fallback
-        }
-
-        btnText.textContent = "Memproses Perbandingan Harga...";
-
-        // 2. Lakukan Analisa dengan Timeout tipis
-        setTimeout(() => {
+        setTimeout(async () => {
             const vProd1 = getVal('selProd1');
             const vName1 = getVal('selName1');
             const vVar1 = getVal('selVar1');
@@ -527,6 +494,7 @@
             analysisResults = [];
             let stats = { total: 0, cheaper: 0, expensive: 0, same: 0, notFound: 0 };
 
+            // TAHAP 1: Bandingkan Data 1 dengan Data 2
             file1Data.forEach(row1 => {
                 const rawProduct = vProd1 >= 0 ? String(row1[vProd1] || '').trim() : '';
                 const rawVariation = vVar1 >= 0 ? String(row1[vVar1] || '').trim() : '';
@@ -543,26 +511,8 @@
                 const rawSku1 = vSku1 >= 0 ? String(row1[vSku1] || '').trim() : '';
                 const rawSku2 = vSku2 >= 0 ? String(row1[vSku2] || '').trim() : '';
                 
-                const keySku1 = rawSku1.toLowerCase(); // Induk
-                const keySku2 = rawSku2.toLowerCase(); // Variasi
-                
                 const name1 = vName1 >= 0 ? row1[vName1] : '';
                 const name2 = (row2 && vName2 >= 0) ? row2[vName2] : '';
-
-                // Penentuan Nilai HPP Modal (Prioritas: CSV Link -> Data 1)
-                let hppModal = 0;
-                // PRIORITAS BARU: Cek SKU 5 digit dari Kolom 5 atau 6
-                if (isFiveDigitSKU(keySku2) && hppMap.has(keySku2)) {
-                    hppModal = hppMap.get(keySku2);
-                } else if (isFiveDigitSKU(keySku1) && hppMap.has(keySku1)) {
-                    hppModal = hppMap.get(keySku1);
-                } else if (keySku2 && hppMap.has(keySku2)) {
-                    hppModal = hppMap.get(keySku2);
-                } else if (keySku1 && hppMap.has(keySku1)) {
-                    hppModal = hppMap.get(keySku1);
-                } else {
-                    hppModal = price1; // Fallback ke harga Data 1 jika tidak ada SKU yang cocok di g-sheet
-                }
 
                 let diff = null;
                 let diffPct = 0;
@@ -579,6 +529,7 @@
                     stats.notFound++;
                 }
 
+                // Masukkan dengan hppModal = null (Menandakan sedang menunggu fetch g-sheet)
                 analysisResults.push({
                     productCode: rawProduct,
                     variationCode: rawVariation,
@@ -587,31 +538,89 @@
                     name: name1 || name2 || `${rawProduct} ${rawVariation}`,
                     price1,
                     price2,
-                    hppModal,
+                    hppModal: null, 
                     diff,
                     diffPct,
                     status
                 });
             });
 
+            // Update UI Stats & Munculkan Tabel Tahap 1
             document.getElementById('statTotal').textContent = stats.total;
             document.getElementById('statCheaper').textContent = stats.cheaper;
             document.getElementById('statExpensive').textContent = stats.expensive;
             document.getElementById('statNotFound').textContent = stats.notFound;
 
-            currentMainFilter = 'all';
-            updateFilterButtons(btnFilterAll);
-            filterMainTable();
-
             uploadSection.classList.add('hidden');
             resultsSection.classList.remove('hidden');
             btnReset.classList.remove('hidden');
 
-            btnAnalyze.disabled = false;
-            btnText.textContent = "Mulai Bandingkan Harga";
-            btnIcon.className = "ph ph-arrow-right text-xl";
+            currentMainFilter = 'all';
+            updateFilterButtons(btnFilterAll);
+            filterMainTable(); // Render tabel awal dengan loading spinner
 
-        }, 500); 
+            // TAHAP 2: Ambil Data HPP Google Sheets
+            btnText.textContent = "Mengekstrak HPP dari G-Sheets...";
+            const hppMap = new Map();
+            
+            try {
+                const csvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrRDnJctzeF3FC_-81KzNHZIX3epxC6WwdmIbhXBGl1rlRKvSUfsvsZCZtuiPyULe5b2wJXOIYK8hs/pub?gid=481142784&single=true&output=csv";
+                const response = await fetch(csvUrl);
+                const arrayBuffer = await response.arrayBuffer();
+                const data = new Uint8Array(arrayBuffer);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const hppDataRows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ''});
+
+                // Looping data google sheets mulai baris ke 2 (index 1)
+                for (let i = 1; i < hppDataRows.length; i++) {
+                    const row = hppDataRows[i];
+                    if (row && row.length > 0) {
+                        const rawSku = String(row[0] || ''); // Kolom A
+                        const sku5 = extract5DigitSKU(rawSku); // Cek format 5 digit
+                        const hppVal = parsePrice(row[7]); // Kolom H
+                        
+                        if (sku5 && hppVal > 0) {
+                            hppMap.set(sku5, hppVal);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Gagal mengambil data HPP dari CSV:", err);
+            }
+
+            // TAHAP 3: Cocokkan 5 digit SKU Data 1 dengan 5 digit SKU di Google Sheets
+            analysisResults.forEach(item => {
+                const sku5_1 = extract5DigitSKU(item.sku1);
+                const sku5_2 = extract5DigitSKU(item.sku2);
+
+                let finalHpp = 0;
+                // Prioritas cek sku variasi (kolom 6), lalu sku induk (kolom 5)
+                if (sku5_2 && hppMap.has(sku5_2)) {
+                    finalHpp = hppMap.get(sku5_2);
+                } else if (sku5_1 && hppMap.has(sku5_1)) {
+                    finalHpp = hppMap.get(sku5_1);
+                } else {
+                    finalHpp = item.price1; // Fallback ke Data 1 jika tidak ada 5 digit yang cocok
+                }
+                
+                item.hppModal = finalHpp;
+            });
+
+            // TAHAP 4: Render ulang tabel dengan kalkulasi Profit & Margin
+            filterMainTable(); 
+
+            // Kembalikan Tombol ke Normal
+            btnAnalyze.disabled = false;
+            btnText.textContent = "Selesai Membandingkan!";
+            btnIcon.className = "ph ph-check-circle text-xl";
+            
+            setTimeout(() => {
+                btnText.textContent = "Bandingkan Ulang Harga";
+                btnIcon.className = "ph ph-arrow-clockwise text-xl";
+            }, 3000);
+
+        }, 100); 
     });
 
     // Helper: Generate HTML string for table rows
@@ -641,7 +650,10 @@
 
         // Kalkulasi Profit & Margin (berdasarkan Data 2 Harga Jual vs HPP Link)
         let marginHtml = '-';
-        if (item.price2 !== null && item.hppModal > 0) {
+        if (item.hppModal === null) {
+            // Tampilan Loading saat proses fetch g-sheet berjalan
+            marginHtml = `<div class="flex items-center gap-1.5 text-xs text-slate-400 font-medium"><i class="ph ph-spinner animate-spin text-lg"></i> Cek HPP...</div>`;
+        } else if (item.price2 !== null && item.hppModal > 0) {
             const hJual = item.price2;
             const hModal = item.hppModal;
             
