@@ -218,9 +218,9 @@
                         <!-- Margin Filter Dropdown -->
                         <select id="selMarginFilter" class="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-slate-700 font-medium">
                             <option value="all">Semua Margin</option>
-                            <option value="20">Margin &gt;= 20%</option>
-                            <option value="15">Margin &gt;= 15%</option>
-                            <option value="10">Margin &gt;= 10%</option>
+                            <option value="20">Target >= 20% (Kolom AB)</option>
+                            <option value="15">Target >= 15% (Kolom X)</option>
+                            <option value="10">Target >= 10% (Kolom T)</option>
                         </select>
                     </div>
 
@@ -240,9 +240,10 @@
                             <th class="py-3 px-4 bg-slate-50">Harga Awal (Data 1)</th>
                             <th class="py-3 px-4 bg-slate-50">Harga Pembanding (Data 2)</th>
                             <th class="py-3 px-4 bg-slate-50">Selisih</th>
+                            <th class="py-3 px-4 bg-slate-50">HPP (Modal)</th>
                             <th class="py-3 px-4 bg-slate-50">
                                 Est. Profit & Margin
-                                <div class="text-[10px] text-slate-400 font-normal mt-0.5">Modal: Data Link Eksternal</div>
+                                <div class="text-[10px] text-slate-400 font-normal mt-0.5">Ref: Google Sheets</div>
                             </th>
                             <th class="py-3 px-4 bg-slate-50">Status</th>
                         </tr>
@@ -315,9 +316,10 @@
                         <th class="py-3 px-4 bg-slate-50">Harga Awal (Data 1)</th>
                         <th class="py-3 px-4 bg-slate-50">Harga Pembanding (Data 2)</th>
                         <th class="py-3 px-4 bg-slate-50">Selisih</th>
+                        <th class="py-3 px-4 bg-slate-50">HPP (Modal)</th>
                         <th class="py-3 px-4 bg-slate-50">
                             Est. Profit & Margin
-                            <div class="text-[10px] text-slate-400 font-normal mt-0.5">Modal: Data Link Eksternal</div>
+                            <div class="text-[10px] text-slate-400 font-normal mt-0.5">Ref: Google Sheets</div>
                         </th>
                         <th class="py-3 px-4 bg-slate-50">Status</th>
                     </tr>
@@ -412,10 +414,8 @@
     // Utilitas Cerdas: Ekstrak 4-5 digit SKU (mengatasi "2948" yang terhapus nol nya)
     const extract5DigitSKU = (str) => {
         if (!str) return null;
-        // Ambil semua kelompok angka pada string (misal: "SKU-2948" -> ["2948"])
         const matches = String(str).match(/\d+/g);
         if (matches) {
-            // Cari angka pertama yang panjangnya 4 atau 5 digit
             for (let num of matches) {
                 if (num.length >= 4 && num.length <= 5) {
                     return num.padStart(5, '0'); // Pad menjadi 5 digit secara otomatis
@@ -468,7 +468,6 @@
                 maxCols = Math.max(maxCols, 15);
 
                 if (isFile1) {
-                    // Berdasarkan permintaan: Data 1 Header di baris 3, Data di baris 7
                     const headerRow = aoa.length > 2 ? aoa[2] : aoa[0];
                     file1Data = aoa.slice(6); 
 
@@ -585,7 +584,7 @@
                     stats.notFound++;
                 }
 
-                // Masukkan default hpp dan profit = null
+                // Default untuk indikator loading gsheet
                 analysisResults.push({
                     productCode: rawProduct,
                     variationCode: rawVariation,
@@ -595,8 +594,11 @@
                     price1,
                     price2,
                     hppModal: null, 
+                    target10: 0,
+                    target15: 0,
+                    target20: 0,
                     profit: null,
-                    marginPct: null,
+                    marginPctActual: null,
                     potongan: null,
                     diff,
                     diffPct,
@@ -604,7 +606,7 @@
                 });
             });
 
-            // Update UI Stats & Tampilkan Tabel Tahap 1
+            // Update UI Stats
             document.getElementById('statTotal').textContent = stats.total;
             document.getElementById('statCheaper').textContent = stats.cheaper;
             document.getElementById('statExpensive').textContent = stats.expensive;
@@ -621,7 +623,7 @@
             mainCurrentPage = 1;
             filterMainTable(); 
 
-            // TAHAP 2: Ambil Data HPP Google Sheets
+            // TAHAP 2: Ambil Data HPP dan Target Harga dari Google Sheets
             btnText.textContent = "Mengekstrak HPP dari G-Sheets...";
             const hppMap = new Map();
             
@@ -634,16 +636,18 @@
                 const sheet = workbook.Sheets[workbook.SheetNames[0]];
                 const hppDataRows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ''});
 
-                // Looping data google sheets mulai baris ke-2 (indeks 1)
                 for (let i = 1; i < hppDataRows.length; i++) {
                     const row = hppDataRows[i];
                     if (row && row.length > 0) {
-                        const rawSku = String(row[0] || ''); // Kolom 1 (Indeks 0)
-                        const sku5 = extract5DigitSKU(rawSku); // Mengatasi nol yang hilang
-                        const hppVal = parsePrice(row[7]); // Kolom ke-8 (Indeks 7)
+                        const rawSku = String(row[0] || ''); // Kolom A
+                        const sku5 = extract5DigitSKU(rawSku); 
+                        const hppVal = parsePrice(row[7]); // Kolom H (HPP)
+                        const t10 = parsePrice(row[19]); // Kolom T (Target 10%)
+                        const t15 = parsePrice(row[23]); // Kolom X (Target 15%)
+                        const t20 = parsePrice(row[27]); // Kolom AB (Target 20%)
                         
                         if (sku5 && hppVal > 0) {
-                            hppMap.set(sku5, hppVal);
+                            hppMap.set(sku5, { hpp: hppVal, t10, t15, t20 });
                         }
                     }
                 }
@@ -651,28 +655,36 @@
                 console.error("Gagal mengambil data HPP dari CSV:", err);
             }
 
-            // TAHAP 3: Cocokkan & Kalkulasi Margin
+            // TAHAP 3: Cocokkan & Kalkulasi Margin berdasarkan Harga Target (Kolom T, X, AB)
             analysisResults.forEach(item => {
                 const sku5_1 = extract5DigitSKU(item.sku1);
                 const sku5_2 = extract5DigitSKU(item.sku2);
 
-                let finalHpp = 0;
+                let sheetData = null;
                 // Prioritas cek sku variasi (kolom 6), kemudian sku induk (kolom 5)
                 if (sku5_2 && hppMap.has(sku5_2)) {
-                    finalHpp = hppMap.get(sku5_2);
+                    sheetData = hppMap.get(sku5_2);
                 } else if (sku5_1 && hppMap.has(sku5_1)) {
-                    finalHpp = hppMap.get(sku5_1);
-                } else {
-                    finalHpp = item.price1; // Fallback ke Data 1 jika tidak ada 5 digit yang cocok
+                    sheetData = hppMap.get(sku5_1);
                 }
-                
-                item.hppModal = finalHpp;
 
-                // Kalkulasi Profit & Margin dimajukan ke sini agar bisa di-filter
+                if (sheetData) {
+                    item.hppModal = sheetData.hpp;
+                    item.target10 = sheetData.t10;
+                    item.target15 = sheetData.t15;
+                    item.target20 = sheetData.t20;
+                } else {
+                    item.hppModal = item.price1; // Fallback ke Data 1
+                    item.target10 = 0;
+                    item.target15 = 0;
+                    item.target20 = 0;
+                }
+
+                // Kalkulasi Profit Real
                 if (item.price2 !== null && item.hppModal > 0) {
                     item.potongan = (item.price2 * 0.25) + 2600;
                     item.profit = item.price2 - item.potongan - item.hppModal;
-                    item.marginPct = item.price2 > 0 ? (item.profit / item.price2) * 100 : 0;
+                    item.marginPctActual = item.price2 > 0 ? (item.profit / item.price2) * 100 : 0;
                 }
             });
 
@@ -704,7 +716,7 @@
 
         mainFilteredData.forEach(item => {
             const skus = [item.sku1, item.sku2].filter(Boolean).join(' / ');
-            // Menggunakan format rumus ="0123" agar Excel membacanya sebagai teks mutlak dan tidak menghapus 0 di depan
+            // Format rumus text ="0123" pada excel agar tidak menghapus 0 di depan
             const safeSku = `="${skus.replace(/"/g, '""')}"`;
             const safeName = `"${(item.name || '').replace(/"/g, '""')}"`;
             const harga1 = item.price1;
@@ -749,29 +761,37 @@
             `;
         }
 
-        // Kalkulasi Profit & Margin (berdasarkan Data yang sudah diset di Tahap 3)
+        // Tampilan HPP
+        let hppHtml = '-';
+        if (item.hppModal === null) {
+            hppHtml = `<i class="ph ph-spinner animate-spin text-lg text-slate-400"></i>`;
+        } else if (item.hppModal > 0) {
+            hppHtml = `<span class="font-medium text-slate-700">${formatCurrency(item.hppModal)}</span>`;
+        }
+
+        // Tampilan Kalkulasi Profit & Margin (Berdasarkan acuan harga di kolom GSheet)
         let marginHtml = '-';
         if (item.hppModal === null) {
-            // Tampilan Loading selama proses fetch g-sheet berjalan
-            marginHtml = `<div class="flex items-center gap-1.5 text-xs text-slate-400 font-medium"><i class="ph ph-spinner animate-spin text-lg"></i> Cek HPP...</div>`;
+            marginHtml = `<div class="flex items-center gap-1.5 text-xs text-slate-400 font-medium"><i class="ph ph-spinner animate-spin text-lg"></i> Mengkalkulasi...</div>`;
         } else if (item.price2 !== null && item.hppModal > 0) {
-            const hModal = item.hppModal;
-            const potongan = item.potongan;
+            const hJual = item.price2;
             const profit = item.profit;
-            const marginPct = item.marginPct;
+            const potongan = item.potongan;
             
             let badgeClass = '';
             let badgeText = '';
-            if (marginPct >= 20) {
+            
+            // Penentuan margin berdasar target Google Sheets (Kolom AB, X, T)
+            if (item.target20 > 0 && hJual >= item.target20) {
                 badgeClass = 'bg-green-100 text-green-700';
                 badgeText = '>= 20%';
-            } else if (marginPct >= 15) {
+            } else if (item.target15 > 0 && hJual >= item.target15) {
                 badgeClass = 'bg-blue-100 text-blue-700';
                 badgeText = '>= 15%';
-            } else if (marginPct >= 10) {
+            } else if (item.target10 > 0 && hJual >= item.target10) {
                 badgeClass = 'bg-yellow-100 text-yellow-700';
                 badgeText = '>= 10%';
-            } else if (marginPct > 0) {
+            } else if (profit > 0) {
                 badgeClass = 'bg-orange-100 text-orange-700';
                 badgeText = '< 10%';
             } else {
@@ -783,11 +803,10 @@
                 <div class="flex flex-col">
                     <span class="${profit >= 0 ? 'text-green-600' : 'text-red-600'} font-medium whitespace-nowrap">${profit > 0 ? '+' : ''}${formatCurrency(profit)}</span>
                     <div class="flex items-center gap-1.5 mt-1">
-                        <span class="text-xs font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${marginPct.toFixed(1)}%</span>
+                        <span class="text-xs font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${item.marginPctActual.toFixed(1)}%</span>
                         <span class="px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${badgeClass}">${badgeText}</span>
                     </div>
-                    <span class="text-[10px] text-slate-400 mt-0.5" title="Potongan: 25% (Admin, Lyn, Asuransi, Affiliate) + Rp2.600 (Packing & Proses)">Potongan: ${formatCurrency(potongan)}</span>
-                    <span class="text-[9px] text-slate-300 mt-0.5 border-t border-slate-100 pt-0.5" title="Harga Modal (HPP)">HPP: ${formatCurrency(hModal)}</span>
+                    <span class="text-[10px] text-slate-400 mt-0.5" title="Potongan: 25% (Admin, Lyn, Asuransi, Affiliate) + Rp2.600 (Packing & Proses)">Pot. ${formatCurrency(potongan)}</span>
                 </div>
             `;
         }
@@ -805,6 +824,7 @@
                 <td class="py-3 px-4 text-slate-600">${formatCurrency(item.price1)}</td>
                 <td class="py-3 px-4 text-slate-600">${item.price2 !== null ? formatCurrency(item.price2) : '-'}</td>
                 <td class="py-3 px-4 font-medium">${diffHtml}</td>
+                <td class="py-3 px-4">${hppHtml}</td>
                 <td class="py-3 px-4">${marginHtml}</td>
                 <td class="py-3 px-4">${statusBadge}</td>
             </tr>
@@ -814,7 +834,7 @@
     // Helper Menampilkan Tabel
     const renderTable = (data, targetBody) => {
         if (data.length === 0) {
-            targetBody.innerHTML = `<tr><td colSpan="6" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
+            targetBody.innerHTML = `<tr><td colSpan="7" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
             return;
         }
         targetBody.innerHTML = data.map(item => generateRowHTML(item)).join('');
@@ -841,11 +861,21 @@
                 matchFilter = item.status === 'not_found';
             }
 
-            // Cek Margin Filter
+            // Cek Margin Filter berdasar GSheet Targets (jika belum sinkron, abaikan dulu filternya)
             let matchMargin = true;
             if (marginThresh !== null) {
-                if (item.marginPct === null || item.marginPct < marginThresh) {
+                if (item.price2 === null || item.hppModal === null) {
                     matchMargin = false;
+                } else {
+                    if (item.target20 > 0 || item.target15 > 0 || item.target10 > 0) {
+                        // Memanfaatkan acuan Google Sheet (AB, X, T)
+                        if (marginThresh === 20 && item.price2 < item.target20) matchMargin = false;
+                        if (marginThresh === 15 && item.price2 < item.target15) matchMargin = false;
+                        if (marginThresh === 10 && item.price2 < item.target10) matchMargin = false;
+                    } else {
+                        // Fallback jika tidak terhubung gsheet
+                        if (item.marginPctActual < marginThresh) matchMargin = false;
+                    }
                 }
             }
             
