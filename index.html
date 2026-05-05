@@ -49,7 +49,7 @@
                         <i class="ph ph-file-xls text-2xl"></i>
                     </div>
                     <div>
-                        <h2 class="font-semibold text-slate-800">Data 1 (Harga Awal)</h2>
+                        <h2 class="font-semibold text-slate-800">Data 1 (Harga Modal / Awal)</h2>
                         <p class="text-xs text-slate-500">Mulai dari <strong>baris ke-7</strong>. Contoh: Data Harga Master Shopee</p>
                     </div>
                 </div>
@@ -225,6 +225,10 @@
                             <th class="py-3 px-4">Harga Awal (Data 1)</th>
                             <th class="py-3 px-4">Harga Pembanding (Data 2)</th>
                             <th class="py-3 px-4">Selisih</th>
+                            <th class="py-3 px-4">
+                                Est. Profit & Margin
+                                <div class="text-[10px] text-slate-400 font-normal mt-0.5">Asumsi Data 1 = Modal</div>
+                            </th>
                             <th class="py-3 px-4">Status</th>
                         </tr>
                     </thead>
@@ -282,6 +286,10 @@
                         <th class="py-3 px-4">Harga Awal (Data 1)</th>
                         <th class="py-3 px-4">Harga Pembanding (Data 2)</th>
                         <th class="py-3 px-4">Selisih</th>
+                        <th class="py-3 px-4">
+                            Est. Profit & Margin
+                            <div class="text-[10px] text-slate-400 font-normal mt-0.5">Asumsi Data 1 = Modal</div>
+                        </th>
                         <th class="py-3 px-4">Status</th>
                     </tr>
                 </thead>
@@ -572,6 +580,53 @@
             `;
         }
 
+        // Kalkulasi Profit & Margin (berdasarkan Data 2 Harga Jual vs Data 1 sbg Modal)
+        let marginHtml = '-';
+        if (item.price2 !== null && item.price1 > 0) {
+            const hJual = item.price2;
+            const hModal = item.price1;
+            
+            // Perhitungan Potongan
+            // 11% admin + 12.5% Lyn Xtra + 0.5% Asuransi + 1% Affiliate = 25% (0.25)
+            // Fix fee = 1600 (Proses) + 1000 (Packing) = 2600
+            const potongan = (hJual * 0.25) + 2600;
+            const pendapatanBersih = hJual - potongan;
+            const profit = pendapatanBersih - hModal;
+            
+            // Margin % dari harga jual
+            const marginPct = hJual > 0 ? (profit / hJual) * 100 : 0;
+            
+            let badgeClass = '';
+            let badgeText = '';
+            if (marginPct >= 20) {
+                badgeClass = 'bg-green-100 text-green-700';
+                badgeText = '>= 20%';
+            } else if (marginPct >= 15) {
+                badgeClass = 'bg-blue-100 text-blue-700';
+                badgeText = '>= 15%';
+            } else if (marginPct >= 10) {
+                badgeClass = 'bg-yellow-100 text-yellow-700';
+                badgeText = '>= 10%';
+            } else if (marginPct > 0) {
+                badgeClass = 'bg-orange-100 text-orange-700';
+                badgeText = '< 10%';
+            } else {
+                badgeClass = 'bg-red-100 text-red-700';
+                badgeText = 'Rugi';
+            }
+
+            marginHtml = `
+                <div class="flex flex-col">
+                    <span class="${profit >= 0 ? 'text-green-600' : 'text-red-600'} font-medium whitespace-nowrap">${profit > 0 ? '+' : ''}${formatCurrency(profit)}</span>
+                    <div class="flex items-center gap-1.5 mt-1">
+                        <span class="text-xs font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${marginPct.toFixed(1)}%</span>
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 mt-0.5" title="Potongan: 25% (Admin, Lyn, Asuransi, Affiliate) + Rp2.600 (Packing & Proses)">Potongan: ${formatCurrency(potongan)}</span>
+                </div>
+            `;
+        }
+
         const skus = [item.sku1, item.sku2].filter(Boolean).join(' / ');
 
         return `
@@ -585,6 +640,7 @@
                 <td class="py-3 px-4 text-slate-600">${formatCurrency(item.price1)}</td>
                 <td class="py-3 px-4 text-slate-600">${item.price2 !== null ? formatCurrency(item.price2) : '-'}</td>
                 <td class="py-3 px-4 font-medium">${diffHtml}</td>
+                <td class="py-3 px-4">${marginHtml}</td>
                 <td class="py-3 px-4">${statusBadge}</td>
             </tr>
         `;
@@ -593,7 +649,7 @@
     // Render Table Helper
     const renderTable = (data, targetBody) => {
         if (data.length === 0) {
-            targetBody.innerHTML = `<tr><td colSpan="5" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
+            targetBody.innerHTML = `<tr><td colSpan="6" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
             return;
         }
         targetBody.innerHTML = data.map(item => generateRowHTML(item)).join('');
