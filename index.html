@@ -13,6 +13,11 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .hidden { display: none !important; }
+        /* Scrollbar kustom untuk tabel dalam modal */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 md:p-8">
@@ -167,24 +172,34 @@
                 <p class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Total Item</p>
                 <p id="statTotal" class="text-2xl font-bold text-slate-800">0</p>
             </div>
-            <div class="bg-green-50 p-4 rounded-xl shadow-sm border border-green-100">
+            <!-- Clickable Cards -->
+            <div onclick="openModal('cheaper')" class="bg-green-50 p-4 rounded-xl shadow-sm border border-green-200 cursor-pointer hover:bg-green-100 transition-colors group relative">
+                <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i class="ph ph-arrow-square-out text-green-600"></i>
+                </div>
                 <p class="text-green-600 text-xs font-medium uppercase tracking-wider mb-1">Lebih Murah (Diskon)</p>
                 <p id="statCheaper" class="text-2xl font-bold text-green-700">0</p>
             </div>
-            <div class="bg-red-50 p-4 rounded-xl shadow-sm border border-red-100">
+            <div onclick="openModal('expensive')" class="bg-red-50 p-4 rounded-xl shadow-sm border border-red-200 cursor-pointer hover:bg-red-100 transition-colors group relative">
+                <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i class="ph ph-arrow-square-out text-red-600"></i>
+                </div>
                 <p class="text-red-600 text-xs font-medium uppercase tracking-wider mb-1">Lebih Mahal</p>
                 <p id="statExpensive" class="text-2xl font-bold text-red-700">0</p>
             </div>
-            <div class="bg-orange-50 p-4 rounded-xl shadow-sm border border-orange-100">
+            <div onclick="openModal('not_found')" class="bg-orange-50 p-4 rounded-xl shadow-sm border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors group relative">
+                <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <i class="ph ph-arrow-square-out text-orange-600"></i>
+                </div>
                 <p class="text-orange-600 text-xs font-medium uppercase tracking-wider mb-1">Tidak Ditemukan</p>
                 <p id="statNotFound" class="text-2xl font-bold text-orange-700">0</p>
             </div>
         </div>
 
-        <!-- Table Container -->
+        <!-- Table Container (Main Data) -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 class="font-semibold text-slate-800">Detail Perbandingan</h3>
+                <h3 class="font-semibold text-slate-800">Detail Semua Perbandingan</h3>
                 <div class="relative">
                     <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                     <input type="text" id="searchInput" placeholder="Cari SKU atau Nama..." class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 bg-white" />
@@ -211,11 +226,73 @@
     </div>
 </div>
 
+<!-- Modal Pop-up -->
+<div id="dataModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        
+        <!-- Modal Header -->
+        <div id="modalHeader" class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+            <div>
+                <h3 id="modalTitle" class="text-xl font-bold text-slate-800">Daftar Item</h3>
+                <p id="modalSubtitle" class="text-sm text-slate-500 mt-1">Total data: 0</p>
+            </div>
+            <button onclick="closeModal()" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                <i class="ph ph-x text-2xl"></i>
+            </button>
+        </div>
+
+        <!-- Modal Toolbar -->
+        <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="relative w-full md:w-80">
+                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="modalSearchInput" placeholder="Cari di kategori ini..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+            </div>
+            
+            <!-- Pagination Controls -->
+            <div class="flex items-center gap-4">
+                <span id="modalPageInfo" class="text-sm font-medium text-slate-600">Hal 1 dari 1</span>
+                <div class="flex gap-2">
+                    <button id="btnPrevPage" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1">
+                        <i class="ph ph-caret-left"></i> Prev
+                    </button>
+                    <button id="btnNextPage" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1">
+                        Next <i class="ph ph-caret-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Table -->
+        <div class="flex-1 overflow-auto custom-scrollbar">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+                <thead class="bg-slate-50 text-slate-600 font-medium sticky top-0 shadow-sm z-10">
+                    <tr>
+                        <th class="py-3 px-4">Produk, Variasi & SKU</th>
+                        <th class="py-3 px-4">Harga Awal (Data 1)</th>
+                        <th class="py-3 px-4">Harga Pembanding (Data 2)</th>
+                        <th class="py-3 px-4">Selisih</th>
+                        <th class="py-3 px-4">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="modalTableBody" class="divide-y divide-slate-50">
+                    <!-- Modal data injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
 <script>
     // State management
     let file1Data = []; 
     let file2Data = [];
     let analysisResults = [];
+
+    // Modal State Management
+    let modalRawData = [];
+    let modalFilteredData = [];
+    let modalCurrentPage = 1;
+    const ITEMS_PER_PAGE = 50;
 
     // DOM Elements
     const dropzone1 = document.getElementById('dropzone1');
@@ -279,7 +356,6 @@
             const opt = document.createElement('option');
             opt.value = i;
             const headerName = headersRow && headersRow[i] ? headersRow[i] : '';
-            // Tampilkan "Nama Header (Kolom X)"
             opt.text = headerName ? `${headerName} (Kolom ${i + 1})` : `Kolom ${i + 1}`;
             if (i === defaultIndex) opt.selected = true;
             select.appendChild(opt);
@@ -298,12 +374,9 @@
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 
-                // Ubah data menjadi Array of Arrays
                 const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
-                
                 if (aoa.length === 0) throw new Error("File kosong");
 
-                // Cari max column untuk menu Select
                 let maxCols = aoa[0].length;
                 for(let i=0; i < Math.min(10, aoa.length); i++){
                     if(aoa[i].length > maxCols) maxCols = aoa[i].length;
@@ -311,37 +384,32 @@
                 maxCols = Math.max(maxCols, 15);
 
                 if (isFile1) {
-                    // Berdasarkan "Shopee Balist.csv"
-                    // Header asli ada di Baris 3 (index 2)
                     const headerRow = aoa.length > 2 ? aoa[2] : aoa[0];
-                    file1Data = aoa.slice(6); // Data mulai baris 7 (index 6)
+                    file1Data = aoa.slice(6); // Data mulai baris 7 
 
                     document.getElementById('fileName1').textContent = file.name;
                     document.getElementById('rowCount1').textContent = `${file1Data.length} baris (mulai baris 7)`;
                     
-                    populateSelect('selProd1', headerRow, maxCols, 0, true); // Kolom 1
-                    populateSelect('selName1', headerRow, maxCols, 1, true); // Kolom 2
-                    populateSelect('selVar1', headerRow, maxCols, 2, true); // Kolom 3
-                    populateSelect('selSku1', headerRow, maxCols, 4, true); // Kolom 5
-                    populateSelect('selSku2', headerRow, maxCols, 5, true); // Kolom 6
-                    populateSelect('selPrice1', headerRow, maxCols, 6, false); // Kolom 7
+                    populateSelect('selProd1', headerRow, maxCols, 0, true); 
+                    populateSelect('selName1', headerRow, maxCols, 1, true); 
+                    populateSelect('selVar1', headerRow, maxCols, 2, true); 
+                    populateSelect('selSku1', headerRow, maxCols, 4, true); 
+                    populateSelect('selSku2', headerRow, maxCols, 5, true); 
+                    populateSelect('selPrice1', headerRow, maxCols, 6, false); 
                     
                     dropzone1.classList.add('hidden');
                     config1.classList.remove('hidden');
                 } else {
-                    // Berdasarkan "eligible_Product_list.csv"
-                    // Header asli ada di Baris 1 (index 0)
                     const headerRow = aoa[0]; 
-                    file2Data = aoa.slice(3); // Data mulai baris 4 (index 3)
+                    file2Data = aoa.slice(3); // Data mulai baris 4 
 
                     document.getElementById('fileName2').textContent = file.name;
                     document.getElementById('rowCount2').textContent = `${file2Data.length} baris (mulai baris 4)`;
                     
-                    // Default Data 2
-                    populateSelect('selName2', headerRow, maxCols, 0, true); // Kolom 1
-                    populateSelect('selProd2', headerRow, maxCols, 1, true); // Kolom 2
-                    populateSelect('selVar2', headerRow, maxCols, 3, true); // Kolom 4
-                    populateSelect('selPrice2', headerRow, maxCols, 10, false); // Kolom 11 (Harga Diskon)
+                    populateSelect('selName2', headerRow, maxCols, 0, true); 
+                    populateSelect('selProd2', headerRow, maxCols, 1, true); 
+                    populateSelect('selVar2', headerRow, maxCols, 3, true); 
+                    populateSelect('selPrice2', headerRow, maxCols, 10, false); 
                     
                     dropzone2.classList.add('hidden');
                     config2.classList.remove('hidden');
@@ -384,7 +452,6 @@
             const vVar2 = getVal('selVar2');
             const vPrice2 = getVal('selPrice2');
 
-            // Kunci unik gabungan Kode Produk & Kode Variasi
             const makeKey = (prod, varCode) => `${String(prod || '').trim().toLowerCase()}|||${String(varCode || '').trim().toLowerCase()}`;
 
             const map2 = new Map();
@@ -403,7 +470,6 @@
                 const rawVariation = vVar1 >= 0 ? String(row1[vVar1] || '').trim() : '';
                 const searchKey = makeKey(rawProduct, rawVariation);
                 
-                // Lewati baris kosong jika kode produknya kosong
                 if (searchKey === '|||') return;
 
                 stats.total++;
@@ -446,13 +512,12 @@
                 });
             });
 
-            // Update UI
             document.getElementById('statTotal').textContent = stats.total;
             document.getElementById('statCheaper').textContent = stats.cheaper;
             document.getElementById('statExpensive').textContent = stats.expensive;
             document.getElementById('statNotFound').textContent = stats.notFound;
 
-            renderTable(analysisResults);
+            renderTable(analysisResults, tableBody);
 
             uploadSection.classList.add('hidden');
             resultsSection.classList.remove('hidden');
@@ -465,58 +530,142 @@
         }, 500); 
     });
 
-    const renderTable = (data) => {
-        tableBody.innerHTML = '';
-        if (data.length === 0) {
-            tableBody.innerHTML = `<tr><td colSpan="5" class="py-8 text-center text-slate-500">Tidak ada data yang cocok dengan pencarian.</td></tr>`;
-            return;
+    // Helper: Generate HTML string for table rows
+    const generateRowHTML = (item) => {
+        let statusBadge = '';
+        if (item.status === 'not_found') {
+            statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-orange-50 text-orange-700"><i class="ph ph-warning-circle"></i> Tidak Ada di Data 2</span>`;
+        } else if (item.status === 'same') {
+            statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600"><i class="ph ph-minus"></i> Harga Sama</span>`;
+        } else if (item.status === 'cheaper') {
+            statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700"><i class="ph ph-trend-down"></i> Diskon ${Math.abs(item.diffPct).toFixed(1)}%</span>`;
+        } else if (item.status === 'expensive') {
+            statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700"><i class="ph ph-trend-up"></i> Naik ${Math.abs(item.diffPct).toFixed(1)}%</span>`;
         }
 
-        data.forEach(item => {
-            const tr = document.createElement('tr');
-            tr.className = "hover:bg-slate-50 transition-colors";
-            
-            let statusBadge = '';
-            if (item.status === 'not_found') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-orange-50 text-orange-700"><i class="ph ph-warning-circle"></i> Tidak Ada di Data 2</span>`;
-            } else if (item.status === 'same') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600"><i class="ph ph-minus"></i> Harga Sama</span>`;
-            } else if (item.status === 'cheaper') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-green-50 text-green-700"><i class="ph ph-trend-down"></i> Diskon ${Math.abs(item.diffPct).toFixed(1)}%</span>`;
-            } else if (item.status === 'expensive') {
-                statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700"><i class="ph ph-trend-up"></i> Naik ${Math.abs(item.diffPct).toFixed(1)}%</span>`;
-            }
+        let diffHtml = '-';
+        if (item.diff !== null) {
+            const colorClass = item.status === 'cheaper' ? 'text-green-600' : (item.status === 'expensive' ? 'text-red-600' : 'text-slate-400');
+            const sign = item.diff > 0 ? '+' : '';
+            diffHtml = `
+                <div class="${colorClass}">
+                    <div>${sign}${formatCurrency(item.diff)}</div>
+                    ${item.diffPct !== 0 ? `<div class="text-xs font-bold opacity-90 mt-0.5">(${sign}${item.diffPct.toFixed(2)}%)</div>` : ''}
+                </div>
+            `;
+        }
 
-            let diffHtml = '-';
-            if (item.diff !== null) {
-                const colorClass = item.status === 'cheaper' ? 'text-green-600' : (item.status === 'expensive' ? 'text-red-600' : 'text-slate-400');
-                const sign = item.diff > 0 ? '+' : '';
-                diffHtml = `
-                    <div class="${colorClass}">
-                        <div>${sign}${formatCurrency(item.diff)}</div>
-                        ${item.diffPct !== 0 ? `<div class="text-xs font-bold opacity-90 mt-0.5">(${sign}${item.diffPct.toFixed(2)}%)</div>` : ''}
-                    </div>
-                `;
-            }
+        const skus = [item.sku1, item.sku2].filter(Boolean).join(' / ');
 
-            const skus = [item.sku1, item.sku2].filter(Boolean).join(' / ');
-
-            tr.innerHTML = `
+        return `
+            <tr class="hover:bg-slate-50 transition-colors">
                 <td class="py-3 px-4">
                     <div class="font-medium text-slate-800">${item.productCode}</div>
                     ${item.variationCode ? `<div class="text-xs font-semibold text-blue-600">${item.variationCode}</div>` : ''}
                     ${skus ? `<div class="text-xs text-slate-500 mt-1">SKU: ${skus}</div>` : ''}
-                    <div class="text-xs text-slate-500 truncate max-w-[200px]" title="${item.name}">${item.name}</div>
+                    <div class="text-xs text-slate-500 truncate max-w-[250px]" title="${item.name}">${item.name}</div>
                 </td>
                 <td class="py-3 px-4 text-slate-600">${formatCurrency(item.price1)}</td>
                 <td class="py-3 px-4 text-slate-600">${item.price2 !== null ? formatCurrency(item.price2) : '-'}</td>
                 <td class="py-3 px-4 font-medium">${diffHtml}</td>
                 <td class="py-3 px-4">${statusBadge}</td>
-            `;
-            tableBody.appendChild(tr);
-        });
+            </tr>
+        `;
     };
 
+    // Render Table Helper
+    const renderTable = (data, targetBody) => {
+        if (data.length === 0) {
+            targetBody.innerHTML = `<tr><td colSpan="5" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
+            return;
+        }
+        targetBody.innerHTML = data.map(item => generateRowHTML(item)).join('');
+    };
+
+    // --- Modal & Pagination Logic ---
+
+    const openModal = (category) => {
+        let title = "";
+        let colorClass = "";
+        
+        if (category === 'cheaper') { title = "Daftar Lebih Murah (Diskon)"; colorClass = "bg-green-50"; }
+        else if (category === 'expensive') { title = "Daftar Lebih Mahal"; colorClass = "bg-red-50"; }
+        else if (category === 'not_found') { title = "Daftar Tidak Ditemukan"; colorClass = "bg-orange-50"; }
+
+        // Atur header styling
+        const modalHeader = document.getElementById('modalHeader');
+        modalHeader.className = `p-5 border-b border-slate-100 flex justify-between items-center ${colorClass}`;
+        document.getElementById('modalTitle').textContent = title;
+
+        // Reset state & ambil data sesuai kategori
+        modalRawData = analysisResults.filter(item => item.status === category);
+        document.getElementById('modalSearchInput').value = '';
+        modalCurrentPage = 1;
+        
+        filterAndRenderModal();
+        
+        // Tampilkan modal
+        document.getElementById('dataModal').classList.remove('hidden');
+    };
+
+    const closeModal = () => {
+        document.getElementById('dataModal').classList.add('hidden');
+    };
+
+    const filterAndRenderModal = () => {
+        const term = document.getElementById('modalSearchInput').value.toLowerCase();
+        
+        // Filter Pencarian di Modal
+        modalFilteredData = modalRawData.filter(item => 
+            item.productCode.toLowerCase().includes(term) ||
+            item.variationCode.toLowerCase().includes(term) ||
+            item.name.toLowerCase().includes(term) ||
+            item.sku1.toLowerCase().includes(term) ||
+            item.sku2.toLowerCase().includes(term)
+        );
+
+        // Kalkulasi Pagination
+        const totalPages = Math.ceil(modalFilteredData.length / ITEMS_PER_PAGE) || 1;
+        if (modalCurrentPage > totalPages) modalCurrentPage = totalPages;
+
+        const startIdx = (modalCurrentPage - 1) * ITEMS_PER_PAGE;
+        const endIdx = startIdx + ITEMS_PER_PAGE;
+        const pageData = modalFilteredData.slice(startIdx, endIdx);
+
+        // Render ke Tabel Modal
+        renderTable(pageData, document.getElementById('modalTableBody'));
+
+        // Update Info UI Modal
+        document.getElementById('modalSubtitle').innerHTML = `Total ditemukan: <strong>${modalFilteredData.length}</strong> data`;
+        document.getElementById('modalPageInfo').textContent = `Hal ${modalCurrentPage} dari ${totalPages}`;
+        
+        // Atur status disabled tombol next/prev
+        document.getElementById('btnPrevPage').disabled = modalCurrentPage === 1;
+        document.getElementById('btnNextPage').disabled = modalCurrentPage === totalPages;
+    };
+
+    // Event Listeners Pagination & Search Modal
+    document.getElementById('modalSearchInput').addEventListener('input', () => {
+        modalCurrentPage = 1;
+        filterAndRenderModal();
+    });
+
+    document.getElementById('btnPrevPage').addEventListener('click', () => {
+        if (modalCurrentPage > 1) {
+            modalCurrentPage--;
+            filterAndRenderModal();
+        }
+    });
+
+    document.getElementById('btnNextPage').addEventListener('click', () => {
+        const totalPages = Math.ceil(modalFilteredData.length / ITEMS_PER_PAGE) || 1;
+        if (modalCurrentPage < totalPages) {
+            modalCurrentPage++;
+            filterAndRenderModal();
+        }
+    });
+
+    // Event Listener Main Search
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
         const filtered = analysisResults.filter(item => 
@@ -526,9 +675,10 @@
             item.sku1.toLowerCase().includes(term) ||
             item.sku2.toLowerCase().includes(term)
         );
-        renderTable(filtered);
+        renderTable(filtered, tableBody);
     });
 
+    // Reset App
     btnReset.addEventListener('click', () => {
         file1Data = [];
         file2Data = [];
