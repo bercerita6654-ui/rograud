@@ -232,19 +232,19 @@
                 </div>
             </div>
             
-            <div class="overflow-x-auto">
+            <div class="overflow-auto max-h-[600px] custom-scrollbar border-b border-slate-100">
                 <table class="w-full text-left text-sm whitespace-nowrap">
-                    <thead class="bg-slate-50 text-slate-600 font-medium border-b border-slate-100">
+                    <thead class="bg-slate-50 text-slate-600 font-medium sticky top-0 shadow-sm z-10 outline outline-1 outline-slate-100">
                         <tr>
-                            <th class="py-3 px-4">Produk, Variasi & SKU</th>
-                            <th class="py-3 px-4">Harga Awal (Data 1)</th>
-                            <th class="py-3 px-4">Harga Pembanding (Data 2)</th>
-                            <th class="py-3 px-4">Selisih</th>
-                            <th class="py-3 px-4">
+                            <th class="py-3 px-4 bg-slate-50">Produk, Variasi & SKU</th>
+                            <th class="py-3 px-4 bg-slate-50">Harga Awal (Data 1)</th>
+                            <th class="py-3 px-4 bg-slate-50">Harga Pembanding (Data 2)</th>
+                            <th class="py-3 px-4 bg-slate-50">Selisih</th>
+                            <th class="py-3 px-4 bg-slate-50">
                                 Est. Profit & Margin
                                 <div class="text-[10px] text-slate-400 font-normal mt-0.5">Modal: Data Link Eksternal</div>
                             </th>
-                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4 bg-slate-50">Status</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-50">
@@ -254,7 +254,7 @@
             </div>
 
             <!-- Pagination for Main Table -->
-            <div class="p-4 border-t border-slate-100 flex justify-between items-center bg-slate-50">
+            <div class="p-4 flex justify-between items-center bg-slate-50">
                 <span id="mainPageInfo" class="text-sm font-medium text-slate-600">Hal 1 dari 1 (0 data)</span>
                 <div class="flex gap-2">
                     <button id="btnMainPrevPage" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1">
@@ -308,18 +308,18 @@
 
         <!-- Modal Table -->
         <div class="flex-1 overflow-auto custom-scrollbar">
-            <table class="w-full text-left text-sm whitespace-nowrap">
-                <thead class="bg-slate-50 text-slate-600 font-medium sticky top-0 shadow-sm z-10">
+            <table class="w-full text-left text-sm whitespace-nowrap relative">
+                <thead class="bg-slate-50 text-slate-600 font-medium sticky top-0 shadow-sm z-10 outline outline-1 outline-slate-100">
                     <tr>
-                        <th class="py-3 px-4">Produk, Variasi & SKU</th>
-                        <th class="py-3 px-4">Harga Awal (Data 1)</th>
-                        <th class="py-3 px-4">Harga Pembanding (Data 2)</th>
-                        <th class="py-3 px-4">Selisih</th>
-                        <th class="py-3 px-4">
+                        <th class="py-3 px-4 bg-slate-50">Produk, Variasi & SKU</th>
+                        <th class="py-3 px-4 bg-slate-50">Harga Awal (Data 1)</th>
+                        <th class="py-3 px-4 bg-slate-50">Harga Pembanding (Data 2)</th>
+                        <th class="py-3 px-4 bg-slate-50">Selisih</th>
+                        <th class="py-3 px-4 bg-slate-50">
                             Est. Profit & Margin
                             <div class="text-[10px] text-slate-400 font-normal mt-0.5">Modal: Data Link Eksternal</div>
                         </th>
-                        <th class="py-3 px-4">Status</th>
+                        <th class="py-3 px-4 bg-slate-50">Status</th>
                     </tr>
                 </thead>
                 <tbody id="modalTableBody" class="divide-y divide-slate-50">
@@ -692,7 +692,7 @@
         }, 100); 
     });
 
-    // Ekspor ke CSV
+    // Ekspor ke CSV dengan pengamanan angka 0 (Formula Text)
     btnExportCSV.addEventListener('click', () => {
         if (mainFilteredData.length === 0) {
             alert("Tidak ada data untuk di-download berdasarkan filter saat ini.");
@@ -704,7 +704,8 @@
 
         mainFilteredData.forEach(item => {
             const skus = [item.sku1, item.sku2].filter(Boolean).join(' / ');
-            const safeSku = `"${skus.replace(/"/g, '""')}"`;
+            // Menggunakan format rumus ="0123" agar Excel membacanya sebagai teks mutlak dan tidak menghapus 0 di depan
+            const safeSku = `="${skus.replace(/"/g, '""')}"`;
             const safeName = `"${(item.name || '').replace(/"/g, '""')}"`;
             const harga1 = item.price1;
             const harga2 = item.price2 !== null ? item.price2 : '';
@@ -717,7 +718,7 @@
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', 'Hasil_Analisa_Harga.csv');
+        link.setAttribute('download', 'Hasil_Analisa_Harga_Diskon.csv');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
