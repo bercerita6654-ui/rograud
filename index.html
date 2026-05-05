@@ -584,7 +584,7 @@
                     stats.notFound++;
                 }
 
-                // Default untuk indikator loading gsheet
+                // Masukkan default hpp dan profit = null
                 analysisResults.push({
                     productCode: rawProduct,
                     variationCode: rawVariation,
@@ -606,7 +606,7 @@
                 });
             });
 
-            // Update UI Stats
+            // Update UI Stats & Tampilkan Tabel Tahap 1
             document.getElementById('statTotal').textContent = stats.total;
             document.getElementById('statCheaper').textContent = stats.cheaper;
             document.getElementById('statExpensive').textContent = stats.expensive;
@@ -802,55 +802,45 @@
             // --- Tooltip Pop Up Logic ---
             let targetPopup = '';
             if (item.target20 > 0 || item.target15 > 0 || item.target10 > 0) {
-                const isAbove20 = hJual >= item.target20;
-                const isAbove15 = hJual >= item.target15;
-                const isAbove10 = hJual >= item.target10;
-
                 let listHtml = '';
                 
                 if (item.target20 > 0) {
+                    const isAbove20 = hJual >= item.target20;
                     listHtml += `
-                    <div>
-                        <div class="flex justify-between items-center font-semibold mb-0.5">
-                            <span class="text-slate-700">Target 20%</span> 
-                            <span class="text-slate-900">${formatCurrency(item.target20)}</span>
-                        </div>
-                        <div class="text-[10px] font-medium ${isAbove20 ? 'text-green-600' : 'text-red-600'}">
+                    <div class="mb-1.5">
+                        <div class="flex justify-between items-center text-[10px] text-slate-500 mb-0.5"><span>Margin 20% (Kolom AB)</span></div>
+                        <div class="text-[11px] font-bold ${isAbove20 ? 'text-green-600' : 'text-red-600'}">
                             ● Harga di ${isAbove20 ? 'atas' : 'bawah'} dari ${formatCurrency(item.target20)}
                         </div>
                     </div>`;
                 }
 
                 if (item.target15 > 0) {
+                    const isAbove15 = hJual >= item.target15;
                     listHtml += `
-                    <div class="${item.target20 > 0 ? 'border-t border-slate-100 pt-2' : ''}">
-                        <div class="flex justify-between items-center font-semibold mb-0.5">
-                            <span class="text-slate-700">Target 15%</span> 
-                            <span class="text-slate-900">${formatCurrency(item.target15)}</span>
-                        </div>
-                        <div class="text-[10px] font-medium ${isAbove15 ? 'text-green-600' : 'text-red-600'}">
+                    <div class="${item.target20 > 0 ? 'border-t border-slate-100 pt-2 mb-1.5' : 'mb-1.5'}">
+                        <div class="flex justify-between items-center text-[10px] text-slate-500 mb-0.5"><span>Margin 15% (Kolom X)</span></div>
+                        <div class="text-[11px] font-bold ${isAbove15 ? 'text-green-600' : 'text-red-600'}">
                             ● Harga di ${isAbove15 ? 'atas' : 'bawah'} dari ${formatCurrency(item.target15)}
                         </div>
                     </div>`;
                 }
 
                 if (item.target10 > 0) {
+                    const isAbove10 = hJual >= item.target10;
                     listHtml += `
                     <div class="${item.target20 > 0 || item.target15 > 0 ? 'border-t border-slate-100 pt-2' : ''}">
-                        <div class="flex justify-between items-center font-semibold mb-0.5">
-                            <span class="text-slate-700">Target 10%</span> 
-                            <span class="text-slate-900">${formatCurrency(item.target10)}</span>
-                        </div>
-                        <div class="text-[10px] font-medium ${isAbove10 ? 'text-green-600' : 'text-red-600'}">
+                        <div class="flex justify-between items-center text-[10px] text-slate-500 mb-0.5"><span>Margin 10% (Kolom T)</span></div>
+                        <div class="text-[11px] font-bold ${isAbove10 ? 'text-green-600' : 'text-red-600'}">
                             ● Harga di ${isAbove10 ? 'atas' : 'bawah'} dari ${formatCurrency(item.target10)}
                         </div>
                     </div>`;
                 }
 
                 targetPopup = `
-                <div class="hidden group-hover:block absolute z-[60] w-64 p-3 bg-white border border-slate-200 shadow-2xl rounded-xl text-xs font-normal text-slate-600 bottom-full left-1/2 -translate-x-1/2 mb-2 cursor-default">
-                    <div class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2 text-center">Acuan Margin Google Sheet</div>
-                    <div class="flex flex-col gap-2">
+                <div class="hidden group-hover:block absolute z-[60] w-56 p-3 bg-white border border-slate-200 shadow-2xl rounded-xl text-xs font-normal text-slate-600 bottom-full left-1/2 -translate-x-1/2 mb-2 cursor-default">
+                    <div class="font-bold text-slate-800 border-b border-slate-100 pb-2 mb-2 text-center">Acuan Target Google Sheets</div>
+                    <div class="flex flex-col">
                         ${listHtml}
                     </div>
                     <!-- Segitiga (Arrow) Tooltip -->
