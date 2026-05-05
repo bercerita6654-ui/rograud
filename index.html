@@ -198,15 +198,30 @@
 
         <!-- Table Container (Main Data) -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 gap-4">
-                <h3 class="font-semibold text-slate-800">Detail Semua Perbandingan</h3>
+            <div class="p-4 border-b border-slate-100 flex flex-col gap-4 bg-slate-50/50">
+                <div class="flex justify-between items-center w-full">
+                    <h3 class="font-semibold text-slate-800">Detail Semua Perbandingan</h3>
+                    <button id="btnExportCSV" class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm">
+                        <i class="ph ph-download-simple"></i> Download CSV
+                    </button>
+                </div>
                 
-                <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                    <!-- Filter Buttons -->
-                    <div class="flex bg-slate-200/50 p-1 rounded-lg w-full sm:w-auto">
-                        <button id="btnFilterAll" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md bg-white text-blue-600 shadow-sm transition-all">Semua</button>
-                        <button id="btnFilterFound" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">Ada di Data 2</button>
-                        <button id="btnFilterNotFound" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">Tidak Ada</button>
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
+                    <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                        <!-- Status Filter Buttons -->
+                        <div class="flex bg-slate-200/50 p-1 rounded-lg w-full sm:w-auto">
+                            <button id="btnFilterAll" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md bg-white text-blue-600 shadow-sm transition-all">Semua</button>
+                            <button id="btnFilterFound" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">Ada di Data 2</button>
+                            <button id="btnFilterNotFound" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">Tidak Ada</button>
+                        </div>
+                        
+                        <!-- Margin Filter Dropdown -->
+                        <select id="selMarginFilter" class="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-slate-700 font-medium">
+                            <option value="all">Semua Margin</option>
+                            <option value="20">Margin &gt;= 20%</option>
+                            <option value="15">Margin &gt;= 15%</option>
+                            <option value="10">Margin &gt;= 10%</option>
+                        </select>
                     </div>
 
                     <!-- Search -->
@@ -237,6 +252,20 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination for Main Table -->
+            <div class="p-4 border-t border-slate-100 flex justify-between items-center bg-slate-50">
+                <span id="mainPageInfo" class="text-sm font-medium text-slate-600">Hal 1 dari 1 (0 data)</span>
+                <div class="flex gap-2">
+                    <button id="btnMainPrevPage" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1">
+                        <i class="ph ph-caret-left"></i> Prev
+                    </button>
+                    <button id="btnMainNextPage" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1">
+                        Next <i class="ph ph-caret-right"></i>
+                    </button>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -306,7 +335,13 @@
     let file1Data = []; 
     let file2Data = [];
     let analysisResults = [];
+    
+    // Main Table State Management
     let currentMainFilter = 'all'; // 'all', 'found', 'not_found'
+    let currentMainMarginFilter = 'all'; // 'all', '10', '15', '20'
+    let mainFilteredData = [];
+    let mainCurrentPage = 1;
+    const MAIN_ITEMS_PER_PAGE = 100; // Limit 100 untuk tabel utama
 
     // Pengaturan State Modal
     let modalRawData = [];
@@ -333,6 +368,8 @@
     const btnFilterAll = document.getElementById('btnFilterAll');
     const btnFilterFound = document.getElementById('btnFilterFound');
     const btnFilterNotFound = document.getElementById('btnFilterNotFound');
+    const selMarginFilter = document.getElementById('selMarginFilter');
+    const btnExportCSV = document.getElementById('btnExportCSV');
 
     // Utilitas: Format Mata Uang
     const formatCurrency = (val) => {
@@ -529,7 +566,7 @@
                     stats.notFound++;
                 }
 
-                // Masukkan dengan hppModal = null (Menandakan sedang menunggu pengambilan g-sheet)
+                // Masukkan default hpp dan profit = null
                 analysisResults.push({
                     productCode: rawProduct,
                     variationCode: rawVariation,
@@ -539,6 +576,9 @@
                     price1,
                     price2,
                     hppModal: null, 
+                    profit: null,
+                    marginPct: null,
+                    potongan: null,
                     diff,
                     diffPct,
                     status
@@ -556,8 +596,11 @@
             btnReset.classList.remove('hidden');
 
             currentMainFilter = 'all';
+            currentMainMarginFilter = 'all';
+            selMarginFilter.value = 'all';
             updateFilterButtons(btnFilterAll);
-            filterMainTable(); // Render tabel awal dengan indikator loading
+            mainCurrentPage = 1;
+            filterMainTable(); 
 
             // TAHAP 2: Ambil Data HPP Google Sheets
             btnText.textContent = "Mengekstrak HPP dari G-Sheets...";
@@ -589,7 +632,7 @@
                 console.error("Gagal mengambil data HPP dari CSV:", err);
             }
 
-            // TAHAP 3: Cocokkan 5 digit SKU Data 1 dengan 5 digit SKU di Google Sheets
+            // TAHAP 3: Cocokkan & Kalkulasi Margin
             analysisResults.forEach(item => {
                 const sku5_1 = extract5DigitSKU(item.sku1);
                 const sku5_2 = extract5DigitSKU(item.sku2);
@@ -605,9 +648,16 @@
                 }
                 
                 item.hppModal = finalHpp;
+
+                // Kalkulasi Profit & Margin dimajukan ke sini agar bisa di-filter
+                if (item.price2 !== null && item.hppModal > 0) {
+                    item.potongan = (item.price2 * 0.25) + 2600;
+                    item.profit = item.price2 - item.potongan - item.hppModal;
+                    item.marginPct = item.price2 > 0 ? (item.profit / item.price2) * 100 : 0;
+                }
             });
 
-            // TAHAP 4: Render ulang tabel dengan kalkulasi Profit & Margin
+            // TAHAP 4: Render ulang tabel utama
             filterMainTable(); 
 
             // Kembalikan Tombol ke Normal
@@ -621,6 +671,37 @@
             }, 3000);
 
         }, 100); 
+    });
+
+    // Ekspor ke CSV
+    btnExportCSV.addEventListener('click', () => {
+        if (mainFilteredData.length === 0) {
+            alert("Tidak ada data untuk di-download berdasarkan filter saat ini.");
+            return;
+        }
+
+        // Header CSV
+        let csvContent = "SKU,Nama Produk,Harga Awal (Data 1),Harga Pembanding (Data 2),Selisih\n";
+
+        mainFilteredData.forEach(item => {
+            const skus = [item.sku1, item.sku2].filter(Boolean).join(' / ');
+            const safeSku = `"${skus.replace(/"/g, '""')}"`;
+            const safeName = `"${(item.name || '').replace(/"/g, '""')}"`;
+            const harga1 = item.price1;
+            const harga2 = item.price2 !== null ? item.price2 : '';
+            const selisih = item.diff !== null ? item.diff : '';
+
+            csvContent += `${safeSku},${safeName},${harga1},${harga2},${selisih}\n`;
+        });
+
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'Hasil_Analisa_Harga.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     });
 
     // Helper: Generate string HTML untuk baris tabel
@@ -648,24 +729,16 @@
             `;
         }
 
-        // Kalkulasi Profit & Margin (berdasarkan Data 2 Harga Jual vs HPP Link)
+        // Kalkulasi Profit & Margin (berdasarkan Data yang sudah diset di Tahap 3)
         let marginHtml = '-';
         if (item.hppModal === null) {
             // Tampilan Loading selama proses fetch g-sheet berjalan
             marginHtml = `<div class="flex items-center gap-1.5 text-xs text-slate-400 font-medium"><i class="ph ph-spinner animate-spin text-lg"></i> Cek HPP...</div>`;
         } else if (item.price2 !== null && item.hppModal > 0) {
-            const hJual = item.price2;
             const hModal = item.hppModal;
-            
-            // Perhitungan Potongan
-            // 11% admin + 12.5% Lyn Xtra + 0.5% Asuransi + 1% Affiliate = 25% (0.25)
-            // Biaya Tetap = 1600 (Proses) + 1000 (Packing) = 2600
-            const potongan = (hJual * 0.25) + 2600;
-            const pendapatanBersih = hJual - potongan;
-            const profit = pendapatanBersih - hModal;
-            
-            // % Margin dari harga jual
-            const marginPct = hJual > 0 ? (profit / hJual) * 100 : 0;
+            const potongan = item.potongan;
+            const profit = item.profit;
+            const marginPct = item.marginPct;
             
             let badgeClass = '';
             let badgeText = '';
@@ -727,11 +800,12 @@
         targetBody.innerHTML = data.map(item => generateRowHTML(item)).join('');
     };
 
-    // --- Logika Filter Tabel Utama ---
+    // --- Logika Paginasi & Filter Tabel Utama ---
     const filterMainTable = () => {
         const term = searchInput.value.toLowerCase();
+        const marginThresh = currentMainMarginFilter === 'all' ? null : parseInt(currentMainMarginFilter);
         
-        const filtered = analysisResults.filter(item => {
+        mainFilteredData = analysisResults.filter(item => {
             // Cek Pencarian
             const matchSearch = item.productCode.toLowerCase().includes(term) ||
                 item.variationCode.toLowerCase().includes(term) ||
@@ -746,12 +820,49 @@
             } else if (currentMainFilter === 'not_found') {
                 matchFilter = item.status === 'not_found';
             }
+
+            // Cek Margin Filter
+            let matchMargin = true;
+            if (marginThresh !== null) {
+                if (item.marginPct === null || item.marginPct < marginThresh) {
+                    matchMargin = false;
+                }
+            }
             
-            return matchSearch && matchFilter;
+            return matchSearch && matchFilter && matchMargin;
         });
+
+        // Kalkulasi Paginasi Tabel Utama (max 100)
+        const totalPages = Math.ceil(mainFilteredData.length / MAIN_ITEMS_PER_PAGE) || 1;
+        if (mainCurrentPage > totalPages) mainCurrentPage = totalPages;
+
+        const startIdx = (mainCurrentPage - 1) * MAIN_ITEMS_PER_PAGE;
+        const endIdx = startIdx + MAIN_ITEMS_PER_PAGE;
+        const pageData = mainFilteredData.slice(startIdx, endIdx);
         
-        renderTable(filtered, tableBody);
+        renderTable(pageData, tableBody);
+
+        // Update Info Paginasi Utama
+        document.getElementById('mainPageInfo').innerHTML = `Hal ${mainCurrentPage} dari ${totalPages} <span class="text-slate-400 font-normal ml-1">(${mainFilteredData.length} data)</span>`;
+        document.getElementById('btnMainPrevPage').disabled = mainCurrentPage === 1;
+        document.getElementById('btnMainNextPage').disabled = mainCurrentPage === totalPages;
     };
+
+    // Listener Navigasi Utama
+    document.getElementById('btnMainPrevPage').addEventListener('click', () => {
+        if (mainCurrentPage > 1) {
+            mainCurrentPage--;
+            filterMainTable();
+        }
+    });
+
+    document.getElementById('btnMainNextPage').addEventListener('click', () => {
+        const totalPages = Math.ceil(mainFilteredData.length / MAIN_ITEMS_PER_PAGE) || 1;
+        if (mainCurrentPage < totalPages) {
+            mainCurrentPage++;
+            filterMainTable();
+        }
+    });
 
     const updateFilterButtons = (activeBtn) => {
         [btnFilterAll, btnFilterFound, btnFilterNotFound].forEach(btn => {
@@ -762,28 +873,39 @@
 
     btnFilterAll.addEventListener('click', () => {
         currentMainFilter = 'all';
+        mainCurrentPage = 1;
         updateFilterButtons(btnFilterAll);
         filterMainTable();
     });
 
     btnFilterFound.addEventListener('click', () => {
         currentMainFilter = 'found';
+        mainCurrentPage = 1;
         updateFilterButtons(btnFilterFound);
         filterMainTable();
     });
 
     btnFilterNotFound.addEventListener('click', () => {
         currentMainFilter = 'not_found';
+        mainCurrentPage = 1;
         updateFilterButtons(btnFilterNotFound);
+        filterMainTable();
+    });
+
+    // Event Listener Filter Margin
+    selMarginFilter.addEventListener('change', (e) => {
+        currentMainMarginFilter = e.target.value;
+        mainCurrentPage = 1;
         filterMainTable();
     });
 
     // Event Listener Pencarian Utama
     searchInput.addEventListener('input', () => {
+        mainCurrentPage = 1;
         filterMainTable();
     });
 
-    // --- Logika Modal & Paginasi ---
+    // --- Logika Modal & Paginasi (Maks 50) ---
 
     const openModal = (category) => {
         let title = "";
