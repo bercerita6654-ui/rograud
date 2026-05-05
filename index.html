@@ -381,17 +381,25 @@
         }).format(val);
     };
 
-    // Utilitas: Parse Harga string ke angka
+    // Utilitas Cerdas: Parse Harga string ke angka (Mendeteksi format 15.000 vs 15,000)
     const parsePrice = (val) => {
-        if (val === undefined || val === null || val === '') return 0;
+        if (!val) return 0;
         if (typeof val === 'number') return val;
-        let cleanedString = val.toString().replace(/Rp|rp|\s/g, '');
-        if (cleanedString.includes(',')) {
-            cleanedString = cleanedString.replace(/\./g, '').replace(',', '.');
+        let s = val.toString().replace(/Rp|rp|\s/g, '');
+        
+        // Deteksi desimal berdasarkan pola koma/titik diikuti 1-2 digit di akhir
+        if (/,\d{1,2}$/.test(s)) {
+            // Indonesia: 15.000,00 -> 15000.00
+            s = s.replace(/\./g, '').replace(',', '.');
+        } else if (/\.\d{1,2}$/.test(s)) {
+            // English: 15,000.00 -> 15000.00
+            s = s.replace(/,/g, '');
         } else {
-            cleanedString = cleanedString.replace(/\./g, '');
+            // Tidak ada desimal (misal: 15.000 atau 15,000)
+            s = s.replace(/[,.]/g, '');
         }
-        const parsed = parseFloat(cleanedString);
+        
+        const parsed = parseFloat(s);
         return isNaN(parsed) ? 0 : parsed;
     };
 
@@ -401,10 +409,20 @@
         return val === '' ? -1 : parseInt(val);
     };
 
-    // Helper: Ekstrak 5 digit SKU dari string apapun
+    // Utilitas Cerdas: Ekstrak 4-5 digit SKU (mengatasi "2948" yang terhapus nol nya)
     const extract5DigitSKU = (str) => {
-        const match = String(str).match(/\b\d{5}\b/);
-        return match ? match[0] : null;
+        if (!str) return null;
+        // Ambil semua kelompok angka pada string (misal: "SKU-2948" -> ["2948"])
+        const matches = String(str).match(/\d+/g);
+        if (matches) {
+            // Cari angka pertama yang panjangnya 4 atau 5 digit
+            for (let num of matches) {
+                if (num.length >= 4 && num.length <= 5) {
+                    return num.padStart(5, '0'); // Pad menjadi 5 digit secara otomatis
+                }
+            }
+        }
+        return null;
     };
 
     // Isi pilihan Select dengan Indeks Array
@@ -450,8 +468,9 @@
                 maxCols = Math.max(maxCols, 15);
 
                 if (isFile1) {
+                    // Berdasarkan permintaan: Data 1 Header di baris 3, Data di baris 7
                     const headerRow = aoa.length > 2 ? aoa[2] : aoa[0];
-                    file1Data = aoa.slice(6); // Data mulai baris ke-7
+                    file1Data = aoa.slice(6); 
 
                     document.getElementById('fileName1').textContent = file.name;
                     document.getElementById('rowCount1').textContent = `${file1Data.length} baris (mulai baris 7)`;
@@ -620,7 +639,7 @@
                     const row = hppDataRows[i];
                     if (row && row.length > 0) {
                         const rawSku = String(row[0] || ''); // Kolom 1 (Indeks 0)
-                        const sku5 = extract5DigitSKU(rawSku); // Cek format 5 digit
+                        const sku5 = extract5DigitSKU(rawSku); // Mengatasi nol yang hilang
                         const hppVal = parsePrice(row[7]); // Kolom ke-8 (Indeks 7)
                         
                         if (sku5 && hppVal > 0) {
