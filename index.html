@@ -198,11 +198,22 @@
 
         <!-- Table Container (Main Data) -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 gap-4">
                 <h3 class="font-semibold text-slate-800">Detail Semua Perbandingan</h3>
-                <div class="relative">
-                    <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="searchInput" placeholder="Cari SKU atau Nama..." class="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 bg-white" />
+                
+                <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <!-- Filter Buttons -->
+                    <div class="flex bg-slate-200/50 p-1 rounded-lg w-full sm:w-auto">
+                        <button id="btnFilterAll" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md bg-white text-blue-600 shadow-sm transition-all">Semua</button>
+                        <button id="btnFilterFound" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">Ada di Data 2</button>
+                        <button id="btnFilterNotFound" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">Tidak Ada</button>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="relative w-full sm:w-auto">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                        <input type="text" id="searchInput" placeholder="Cari SKU atau Nama..." class="w-full sm:w-64 pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                    </div>
                 </div>
             </div>
             
@@ -287,6 +298,7 @@
     let file1Data = []; 
     let file2Data = [];
     let analysisResults = [];
+    let currentMainFilter = 'all'; // 'all', 'found', 'not_found'
 
     // Modal State Management
     let modalRawData = [];
@@ -310,6 +322,9 @@
     const btnReset = document.getElementById('btnReset');
     const searchInput = document.getElementById('searchInput');
     const tableBody = document.getElementById('tableBody');
+    const btnFilterAll = document.getElementById('btnFilterAll');
+    const btnFilterFound = document.getElementById('btnFilterFound');
+    const btnFilterNotFound = document.getElementById('btnFilterNotFound');
 
     // Utility: Format Currency
     const formatCurrency = (val) => {
@@ -517,7 +532,9 @@
             document.getElementById('statExpensive').textContent = stats.expensive;
             document.getElementById('statNotFound').textContent = stats.notFound;
 
-            renderTable(analysisResults, tableBody);
+            currentMainFilter = 'all';
+            updateFilterButtons(btnFilterAll);
+            filterMainTable();
 
             uploadSection.classList.add('hidden');
             resultsSection.classList.remove('hidden');
@@ -581,6 +598,62 @@
         }
         targetBody.innerHTML = data.map(item => generateRowHTML(item)).join('');
     };
+
+    // --- Main Table Filter Logic ---
+    const filterMainTable = () => {
+        const term = searchInput.value.toLowerCase();
+        
+        const filtered = analysisResults.filter(item => {
+            // Check Search
+            const matchSearch = item.productCode.toLowerCase().includes(term) ||
+                item.variationCode.toLowerCase().includes(term) ||
+                item.name.toLowerCase().includes(term) ||
+                item.sku1.toLowerCase().includes(term) ||
+                item.sku2.toLowerCase().includes(term);
+                
+            // Check Filter Status
+            let matchFilter = true;
+            if (currentMainFilter === 'found') {
+                matchFilter = item.status !== 'not_found';
+            } else if (currentMainFilter === 'not_found') {
+                matchFilter = item.status === 'not_found';
+            }
+            
+            return matchSearch && matchFilter;
+        });
+        
+        renderTable(filtered, tableBody);
+    };
+
+    const updateFilterButtons = (activeBtn) => {
+        [btnFilterAll, btnFilterFound, btnFilterNotFound].forEach(btn => {
+            btn.className = "flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all";
+        });
+        activeBtn.className = "flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md bg-white text-blue-600 shadow-sm transition-all";
+    };
+
+    btnFilterAll.addEventListener('click', () => {
+        currentMainFilter = 'all';
+        updateFilterButtons(btnFilterAll);
+        filterMainTable();
+    });
+
+    btnFilterFound.addEventListener('click', () => {
+        currentMainFilter = 'found';
+        updateFilterButtons(btnFilterFound);
+        filterMainTable();
+    });
+
+    btnFilterNotFound.addEventListener('click', () => {
+        currentMainFilter = 'not_found';
+        updateFilterButtons(btnFilterNotFound);
+        filterMainTable();
+    });
+
+    // Event Listener Main Search
+    searchInput.addEventListener('input', () => {
+        filterMainTable();
+    });
 
     // --- Modal & Pagination Logic ---
 
@@ -663,19 +736,6 @@
             modalCurrentPage++;
             filterAndRenderModal();
         }
-    });
-
-    // Event Listener Main Search
-    searchInput.addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        const filtered = analysisResults.filter(item => 
-            item.productCode.toLowerCase().includes(term) ||
-            item.variationCode.toLowerCase().includes(term) ||
-            item.name.toLowerCase().includes(term) ||
-            item.sku1.toLowerCase().includes(term) ||
-            item.sku2.toLowerCase().includes(term)
-        );
-        renderTable(filtered, tableBody);
     });
 
     // Reset App
