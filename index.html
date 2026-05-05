@@ -50,7 +50,7 @@
                     </div>
                     <div>
                         <h2 class="font-semibold text-slate-800">Data 1 (Harga Modal / Awal)</h2>
-                        <p class="text-xs text-slate-500">Mulai dari <strong>baris ke-2</strong>. Contoh: Data Harga Master Shopee</p>
+                        <p class="text-xs text-slate-500">Mulai dari <strong>baris ke-7</strong>. Contoh: Data Harga Master Shopee</p>
                     </div>
                 </div>
 
@@ -413,11 +413,11 @@
                 maxCols = Math.max(maxCols, 15);
 
                 if (isFile1) {
-                    const headerRow = aoa[0];
-                    file1Data = aoa.slice(1); // Data mulai baris ke-2
+                    const headerRow = aoa.length > 2 ? aoa[2] : aoa[0];
+                    file1Data = aoa.slice(6); // Data mulai baris ke-7
 
                     document.getElementById('fileName1').textContent = file.name;
-                    document.getElementById('rowCount1').textContent = `${file1Data.length} baris (mulai baris 2)`;
+                    document.getElementById('rowCount1').textContent = `${file1Data.length} baris (mulai baris 7)`;
                     
                     populateSelect('selProd1', headerRow, maxCols, 0, true); 
                     populateSelect('selName1', headerRow, maxCols, 1, true); 
