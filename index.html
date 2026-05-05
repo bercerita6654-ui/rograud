@@ -26,7 +26,7 @@
                 <i class="ph ph-trend-down text-blue-600 text-3xl"></i>
                 Analisa Harga Diskon Marketplace
             </h1>
-            <p class="text-slate-500 mt-1">Bandingkan dua data Excel (.xlsx) untuk menemukan selisih harga dan persentase diskon.</p>
+            <p class="text-slate-500 mt-1">Bandingkan dua data Excel (.xlsx / .csv) untuk menemukan selisih harga dan persentase diskon.</p>
         </div>
         <button id="btnReset" class="hidden mt-4 md:mt-0 px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors">
             Mulai Ulang
@@ -45,7 +45,7 @@
                     </div>
                     <div>
                         <h2 class="font-semibold text-slate-800">Data 1 (Harga Awal)</h2>
-                        <p class="text-xs text-slate-500">Mulai dari <strong>baris ke-7</strong>. Contoh: Data harga Master</p>
+                        <p class="text-xs text-slate-500">Mulai dari <strong>baris ke-7</strong>. Contoh: Data Harga Master Shopee</p>
                     </div>
                 </div>
 
@@ -53,9 +53,9 @@
                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
                         <i class="ph ph-cloud-arrow-up text-4xl text-slate-400 mb-3"></i>
                         <p class="text-sm text-slate-600"><span class="font-semibold">Klik untuk unggah</span> data 1</p>
-                        <p class="text-xs text-slate-400 mt-1">.XLSX atau .XLS</p>
+                        <p class="text-xs text-slate-400 mt-1">.XLSX, .XLS, atau .CSV</p>
                     </div>
-                    <input type="file" id="inputFile1" class="hidden" accept=".xlsx, .xls" />
+                    <input type="file" id="inputFile1" class="hidden" accept=".xlsx, .xls, .csv" />
                 </label>
 
                 <div id="config1" class="hidden bg-green-50 border border-green-100 rounded-xl p-4 mt-4">
@@ -107,7 +107,7 @@
                     </div>
                     <div>
                         <h2 class="font-semibold text-slate-800">Data 2 (Harga Pembanding)</h2>
-                        <p class="text-xs text-slate-500">Mulai dari <strong>baris ke-4</strong>. Contoh: Data harga Diskon</p>
+                        <p class="text-xs text-slate-500">Mulai dari <strong>baris ke-4</strong>. Contoh: Data Harga Promo Eligible</p>
                     </div>
                 </div>
 
@@ -115,9 +115,9 @@
                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
                         <i class="ph ph-cloud-arrow-up text-4xl text-slate-400 mb-3"></i>
                         <p class="text-sm text-slate-600"><span class="font-semibold">Klik untuk unggah</span> data 2</p>
-                        <p class="text-xs text-slate-400 mt-1">.XLSX atau .XLS</p>
+                        <p class="text-xs text-slate-400 mt-1">.XLSX, .XLS, atau .CSV</p>
                     </div>
-                    <input type="file" id="inputFile2" class="hidden" accept=".xlsx, .xls" />
+                    <input type="file" id="inputFile2" class="hidden" accept=".xlsx, .xls, .csv" />
                 </label>
 
                 <div id="config2" class="hidden bg-green-50 border border-green-100 rounded-xl p-4 mt-4">
@@ -168,7 +168,7 @@
                 <p id="statTotal" class="text-2xl font-bold text-slate-800">0</p>
             </div>
             <div class="bg-green-50 p-4 rounded-xl shadow-sm border border-green-100">
-                <p class="text-green-600 text-xs font-medium uppercase tracking-wider mb-1">Lebih Murah</p>
+                <p class="text-green-600 text-xs font-medium uppercase tracking-wider mb-1">Lebih Murah (Diskon)</p>
                 <p id="statCheaper" class="text-2xl font-bold text-green-700">0</p>
             </div>
             <div class="bg-red-50 p-4 rounded-xl shadow-sm border border-red-100">
@@ -213,10 +213,8 @@
 
 <script>
     // State management
-    let file1Data = null;
-    let file2Data = null;
-    let file1Headers = [];
-    let file2Headers = [];
+    let file1Data = []; 
+    let file2Data = [];
     let analysisResults = [];
 
     // DOM Elements
@@ -260,8 +258,14 @@
         return isNaN(parsed) ? 0 : parsed;
     };
 
-    // Populate Select options
-    const populateSelect = (selectId, headers, defaultIndex, addEmptyOption = false) => {
+    // Helper: Ambil Value Int dari Select
+    const getVal = (id) => {
+        const val = document.getElementById(id).value;
+        return val === '' ? -1 : parseInt(val);
+    };
+
+    // Populate Select options dengan Index Array
+    const populateSelect = (selectId, headersRow, maxCols, defaultIndex, addEmptyOption = false) => {
         const select = document.getElementById(selectId);
         select.innerHTML = '';
         if (addEmptyOption) {
@@ -270,13 +274,16 @@
             opt.text = '-- Tidak Ada / Pilih Kolom --';
             select.appendChild(opt);
         }
-        headers.forEach((h, index) => {
+        
+        for (let i = 0; i < maxCols; i++) {
             const opt = document.createElement('option');
-            opt.value = h;
-            opt.text = h;
-            if (index === defaultIndex) opt.selected = true;
+            opt.value = i;
+            const headerName = headersRow && headersRow[i] ? headersRow[i] : '';
+            // Tampilkan "Nama Header (Kolom X)"
+            opt.text = headerName ? `${headerName} (Kolom ${i + 1})` : `Kolom ${i + 1}`;
+            if (i === defaultIndex) opt.selected = true;
             select.appendChild(opt);
-        });
+        }
     };
 
     // Handle File Upload
@@ -291,53 +298,50 @@
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
                 
-                // Konfigurasi Baris Mulai:
-                // SheetJS index dimulai dari 0.
-                // Data 1 baris ke 7 (index 6). Data 2 baris ke 4 (index 3).
-                const startRowIndex = isFile1 ? 6 : 3;
-
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: '', range: startRowIndex });
+                // Ubah data menjadi Array of Arrays
+                const aoa = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
                 
-                const headers = jsonData.length > 0 ? Object.keys(jsonData[0]) : [];
+                if (aoa.length === 0) throw new Error("File kosong");
+
+                // Cari max column untuk menu Select
+                let maxCols = aoa[0].length;
+                for(let i=0; i < Math.min(10, aoa.length); i++){
+                    if(aoa[i].length > maxCols) maxCols = aoa[i].length;
+                }
+                maxCols = Math.max(maxCols, 15);
 
                 if (isFile1) {
-                    file1Data = jsonData;
-                    file1Headers = headers;
+                    // Berdasarkan "Shopee Balist.csv"
+                    // Header asli ada di Baris 3 (index 2)
+                    const headerRow = aoa.length > 2 ? aoa[2] : aoa[0];
+                    file1Data = aoa.slice(6); // Data mulai baris 7 (index 6)
+
                     document.getElementById('fileName1').textContent = file.name;
-                    document.getElementById('rowCount1').textContent = `${jsonData.length} baris (dari baris 7)`;
+                    document.getElementById('rowCount1').textContent = `${file1Data.length} baris (mulai baris 7)`;
                     
-                    // Defaults for Data 1 (Mengingat index mulai dari 0)
-                    // Kode Produk (Kolom 1 -> index 0)
-                    populateSelect('selProd1', headers, 0, true);
-                    // Nama Produk (Kolom 2 -> index 1)
-                    populateSelect('selName1', headers, 1, true);
-                    // Kode Variasi (Kolom 3 -> index 2)
-                    populateSelect('selVar1', headers, 2, true);
-                    // SKU 1 (Kolom 5 -> index 4)
-                    populateSelect('selSku1', headers, 4, true);
-                    // SKU 2 (Kolom 6 -> index 5)
-                    populateSelect('selSku2', headers, 5, true);
-                    // Harga (Kolom 7 -> index 6)
-                    populateSelect('selPrice1', headers, 6, false);
+                    populateSelect('selProd1', headerRow, maxCols, 0, true); // Kolom 1
+                    populateSelect('selName1', headerRow, maxCols, 1, true); // Kolom 2
+                    populateSelect('selVar1', headerRow, maxCols, 2, true); // Kolom 3
+                    populateSelect('selSku1', headerRow, maxCols, 4, true); // Kolom 5
+                    populateSelect('selSku2', headerRow, maxCols, 5, true); // Kolom 6
+                    populateSelect('selPrice1', headerRow, maxCols, 6, false); // Kolom 7
                     
                     dropzone1.classList.add('hidden');
                     config1.classList.remove('hidden');
                 } else {
-                    file2Data = jsonData;
-                    file2Headers = headers;
+                    // Berdasarkan "eligible_Product_list.csv"
+                    // Header asli ada di Baris 1 (index 0)
+                    const headerRow = aoa[0]; 
+                    file2Data = aoa.slice(3); // Data mulai baris 4 (index 3)
+
                     document.getElementById('fileName2').textContent = file.name;
-                    document.getElementById('rowCount2').textContent = `${jsonData.length} baris (dari baris 4)`;
+                    document.getElementById('rowCount2').textContent = `${file2Data.length} baris (mulai baris 4)`;
                     
-                    // Defaults for Data 2 (Mengingat index mulai dari 0)
-                    // Nama Produk (Kolom 1 -> index 0)
-                    populateSelect('selName2', headers, 0, true);
-                    // Kode Produk (Kolom 2 -> index 1)
-                    populateSelect('selProd2', headers, 1, true);
-                    // Kode Variasi (Kolom 4 -> index 3)
-                    populateSelect('selVar2', headers, 3, true);
-                    // Harga (Kolom 11 atau 12 -> index 10 atau 11)
-                    let priceIndex = headers.length > 10 ? 10 : (headers.length > 11 ? 11 : 0);
-                    populateSelect('selPrice2', headers, priceIndex, false);
+                    // Default Data 2
+                    populateSelect('selName2', headerRow, maxCols, 0, true); // Kolom 1
+                    populateSelect('selProd2', headerRow, maxCols, 1, true); // Kolom 2
+                    populateSelect('selVar2', headerRow, maxCols, 3, true); // Kolom 4
+                    populateSelect('selPrice2', headerRow, maxCols, 10, false); // Kolom 11 (Harga Diskon)
                     
                     dropzone2.classList.add('hidden');
                     config2.classList.remove('hidden');
@@ -345,19 +349,18 @@
 
                 checkBothFilesLoaded();
             } catch (error) {
-                alert("Gagal membaca file. Pastikan formatnya valid .xlsx atau .xls, dan baris awalnya sesuai.");
+                alert("Gagal membaca file. Pastikan formatnya valid .xlsx atau .csv");
                 console.error(error);
             }
         };
         reader.readAsArrayBuffer(file);
     };
 
-    // Event Listeners for File Inputs
     input1.addEventListener('change', (e) => processFile(e.target.files[0], true));
     input2.addEventListener('change', (e) => processFile(e.target.files[0], false));
 
     const checkBothFilesLoaded = () => {
-        if (file1Data && file2Data) {
+        if (file1Data.length > 0 && file2Data.length > 0) {
             actionContainer.classList.remove('hidden');
         }
     };
@@ -369,24 +372,26 @@
         btnIcon.className = "ph ph-spinner animate-spin text-xl";
 
         setTimeout(() => {
-            const vProd1 = document.getElementById('selProd1').value;
-            const vName1 = document.getElementById('selName1').value;
-            const vVar1 = document.getElementById('selVar1').value;
-            const vSku1 = document.getElementById('selSku1').value;
-            const vSku2 = document.getElementById('selSku2').value;
-            const vPrice1 = document.getElementById('selPrice1').value;
+            const vProd1 = getVal('selProd1');
+            const vName1 = getVal('selName1');
+            const vVar1 = getVal('selVar1');
+            const vSku1 = getVal('selSku1');
+            const vSku2 = getVal('selSku2');
+            const vPrice1 = getVal('selPrice1');
 
-            const vProd2 = document.getElementById('selProd2').value;
-            const vName2 = document.getElementById('selName2').value;
-            const vVar2 = document.getElementById('selVar2').value;
-            const vPrice2 = document.getElementById('selPrice2').value;
+            const vProd2 = getVal('selProd2');
+            const vName2 = getVal('selName2');
+            const vVar2 = getVal('selVar2');
+            const vPrice2 = getVal('selPrice2');
 
-            // Pencocokan tetap didasarkan pada Kode Produk + Kode Variasi
+            // Kunci unik gabungan Kode Produk & Kode Variasi
             const makeKey = (prod, varCode) => `${String(prod || '').trim().toLowerCase()}|||${String(varCode || '').trim().toLowerCase()}`;
 
             const map2 = new Map();
             file2Data.forEach(row => {
-                const key = makeKey(row[vProd2], row[vVar2]);
+                const prodVal = vProd2 >= 0 ? row[vProd2] : '';
+                const varVal = vVar2 >= 0 ? row[vVar2] : '';
+                const key = makeKey(prodVal, varVal);
                 if (key !== '|||') map2.set(key, row);
             });
 
@@ -394,19 +399,23 @@
             let stats = { total: 0, cheaper: 0, expensive: 0, same: 0, notFound: 0 };
 
             file1Data.forEach(row1 => {
-                const rawProduct = String(row1[vProd1] || '').trim();
-                const rawVariation = String(row1[vVar1] || '').trim();
+                const rawProduct = vProd1 >= 0 ? String(row1[vProd1] || '').trim() : '';
+                const rawVariation = vVar1 >= 0 ? String(row1[vVar1] || '').trim() : '';
                 const searchKey = makeKey(rawProduct, rawVariation);
                 
+                // Lewati baris kosong jika kode produknya kosong
                 if (searchKey === '|||') return;
 
                 stats.total++;
                 const row2 = map2.get(searchKey);
-                const price1 = parsePrice(row1[vPrice1]);
-                const price2 = row2 ? parsePrice(row2[vPrice2]) : null;
                 
-                const rawSku1 = String(row1[vSku1] || '').trim();
-                const rawSku2 = String(row1[vSku2] || '').trim();
+                const price1 = vPrice1 >= 0 ? parsePrice(row1[vPrice1]) : 0;
+                const price2 = (row2 && vPrice2 >= 0) ? parsePrice(row2[vPrice2]) : null;
+                
+                const rawSku1 = vSku1 >= 0 ? String(row1[vSku1] || '').trim() : '';
+                const rawSku2 = vSku2 >= 0 ? String(row1[vSku2] || '').trim() : '';
+                const name1 = vName1 >= 0 ? row1[vName1] : '';
+                const name2 = (row2 && vName2 >= 0) ? row2[vName2] : '';
 
                 let diff = null;
                 let diffPct = 0;
@@ -428,7 +437,7 @@
                     variationCode: rawVariation,
                     sku1: rawSku1,
                     sku2: rawSku2,
-                    name: row1[vName1] || (row2 ? row2[vName2] : '') || `${rawProduct} ${rawVariation}`,
+                    name: name1 || name2 || `${rawProduct} ${rawVariation}`,
                     price1,
                     price2,
                     diff,
@@ -437,7 +446,7 @@
                 });
             });
 
-            // Update Stats UI
+            // Update UI
             document.getElementById('statTotal').textContent = stats.total;
             document.getElementById('statCheaper').textContent = stats.cheaper;
             document.getElementById('statExpensive').textContent = stats.expensive;
@@ -445,20 +454,17 @@
 
             renderTable(analysisResults);
 
-            // Toggle Views
             uploadSection.classList.add('hidden');
             resultsSection.classList.remove('hidden');
             btnReset.classList.remove('hidden');
 
-            // Reset Button State
             btnAnalyze.disabled = false;
             btnText.textContent = "Mulai Bandingkan Harga";
             btnIcon.className = "ph ph-arrow-right text-xl";
 
-        }, 500); // Small delay for UI
+        }, 500); 
     });
 
-    // Render Table
     const renderTable = (data) => {
         tableBody.innerHTML = '';
         if (data.length === 0) {
@@ -470,7 +476,6 @@
             const tr = document.createElement('tr');
             tr.className = "hover:bg-slate-50 transition-colors";
             
-            // Status Badge Logic
             let statusBadge = '';
             if (item.status === 'not_found') {
                 statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-orange-50 text-orange-700"><i class="ph ph-warning-circle"></i> Tidak Ada di Data 2</span>`;
@@ -482,7 +487,6 @@
                 statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700"><i class="ph ph-trend-up"></i> Naik ${Math.abs(item.diffPct).toFixed(1)}%</span>`;
             }
 
-            // Diff Column Logic
             let diffHtml = '-';
             if (item.diff !== null) {
                 const colorClass = item.status === 'cheaper' ? 'text-green-600' : (item.status === 'expensive' ? 'text-red-600' : 'text-slate-400');
@@ -513,7 +517,6 @@
         });
     };
 
-    // Search functionality
     searchInput.addEventListener('input', (e) => {
         const term = e.target.value.toLowerCase();
         const filtered = analysisResults.filter(item => 
@@ -526,10 +529,9 @@
         renderTable(filtered);
     });
 
-    // Reset App
     btnReset.addEventListener('click', () => {
-        file1Data = null;
-        file2Data = null;
+        file1Data = [];
+        file2Data = [];
         input1.value = '';
         input2.value = '';
         
