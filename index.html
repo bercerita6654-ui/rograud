@@ -159,9 +159,12 @@
             </div>
         </div>
 
-        <!-- Action Button -->
-        <div id="actionContainer" class="hidden flex justify-center mt-6">
-            <button id="btnAnalyze" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2">
+        <!-- Action Button (Diperbarui dengan Peringatan) -->
+        <div id="actionContainer" class="hidden flex flex-col items-center mt-6 gap-3">
+            <div id="missingFileWarning" class="text-sm font-medium text-orange-600 bg-orange-50 px-4 py-2 rounded-lg border border-orange-200 shadow-sm">
+                <!-- Peringatan akan diisi via JS -->
+            </div>
+            <button id="btnAnalyze" disabled class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                 <span id="btnText">Mulai Bandingkan Harga</span>
                 <i class="ph ph-arrow-right text-xl" id="btnIcon"></i>
             </button>
@@ -393,6 +396,7 @@
     const btnExportCSV = document.getElementById('btnExportCSV');
     const mainCustomDiscount = document.getElementById('mainCustomDiscount');
     const modalCustomDiscount = document.getElementById('modalCustomDiscount');
+    const missingFileWarning = document.getElementById('missingFileWarning');
 
     // Listener Simulasi Diskon
     if(mainCustomDiscount) {
@@ -429,13 +433,10 @@
         
         // Deteksi desimal berdasarkan pola koma/titik diikuti 1-2 digit di akhir
         if (/,\d{1,2}$/.test(s)) {
-            // Indonesia: 15.000,00 -> 15000.00
             s = s.replace(/\./g, '').replace(',', '.');
         } else if (/\.\d{1,2}$/.test(s)) {
-            // English: 15,000.00 -> 15000.00
             s = s.replace(/,/g, '');
         } else {
-            // Tidak ada desimal (misal: 15.000 atau 15,000)
             s = s.replace(/[,.]/g, '');
         }
         
@@ -449,7 +450,7 @@
         return val === '' ? -1 : parseInt(val);
     };
 
-    // Utilitas Cerdas: Ekstrak 4-5 digit SKU (mengatasi "2948" yang terhapus nol nya)
+    // Utilitas Cerdas: Ekstrak 4-5 digit SKU 
     const extract5DigitSKU = (str) => {
         if (!str) return null;
         const matches = String(str).match(/\d+/g);
@@ -515,16 +516,16 @@
                     populateSelect('selProd1', headerRow, maxCols, 0, true); 
                     populateSelect('selName1', headerRow, maxCols, 1, true); 
                     populateSelect('selVar1', headerRow, maxCols, 2, true); 
-                    populateSelect('selSku1', headerRow, maxCols, 4, true);  // Default Kolom 5
-                    populateSelect('selSku2', headerRow, maxCols, 5, true);  // Default Kolom 6
+                    populateSelect('selSku1', headerRow, maxCols, 4, true);  
+                    populateSelect('selSku2', headerRow, maxCols, 5, true);  
                     populateSelect('selPrice1', headerRow, maxCols, 6, false); 
                     
                     dropzone1.classList.add('hidden');
                     config1.classList.remove('hidden');
                 } else {
                     const headerRow = aoa[0]; 
-                    file2FullData = aoa; // Simpan seluruh data untuk diekspor kembali nantinya
-                    file2Data = aoa.slice(3); // Data mulai baris ke-4
+                    file2FullData = aoa; 
+                    file2Data = aoa.slice(3); 
 
                     document.getElementById('fileName2').textContent = file.name;
                     document.getElementById('rowCount2').textContent = `${file2Data.length} baris (mulai baris 4)`;
@@ -551,8 +552,23 @@
     input2.addEventListener('change', (e) => processFile(e.target.files[0], false));
 
     const checkBothFilesLoaded = () => {
-        if (file1Data.length > 0 && file2Data.length > 0) {
+        // Tampilkan container tombol jika salah satu file sudah diunggah
+        if (file1Data.length > 0 || file2Data.length > 0) {
             actionContainer.classList.remove('hidden');
+            
+            // Evaluasi apakah kedua file sudah lengkap
+            if (file1Data.length > 0 && file2Data.length > 0) {
+                btnAnalyze.disabled = false;
+                missingFileWarning.classList.add('hidden');
+            } else {
+                btnAnalyze.disabled = true;
+                missingFileWarning.classList.remove('hidden');
+                if (file1Data.length === 0) {
+                    missingFileWarning.innerHTML = `<i class="ph ph-warning-circle inline-block mr-1"></i> Menunggu Data 1 diunggah...`;
+                } else {
+                    missingFileWarning.innerHTML = `<i class="ph ph-warning-circle inline-block mr-1"></i> Menunggu Data 2 diunggah...`;
+                }
+            }
         }
     };
 
@@ -563,7 +579,6 @@
         btnIcon.className = "ph ph-spinner animate-spin text-xl";
 
         setTimeout(async () => {
-            // Simpan konfigurasi kolom ke global agar bisa dipakai oleh fungsi Export CSV
             colConfig = {
                 vProd1: getVal('selProd1'),
                 vName1: getVal('selName1'),
@@ -625,7 +640,6 @@
                     stats.notFound++;
                 }
 
-                // Masukkan default hpp dan profit = null
                 analysisResults.push({
                     productCode: rawProduct,
                     variationCode: rawVariation,
@@ -647,7 +661,6 @@
                 });
             });
 
-            // Update UI Stats & Tampilkan Tabel Tahap 1
             document.getElementById('statTotal').textContent = stats.total;
             document.getElementById('statCheaper').textContent = stats.cheaper;
             document.getElementById('statExpensive').textContent = stats.expensive;
@@ -702,7 +715,6 @@
                 const sku5_2 = extract5DigitSKU(item.sku2);
 
                 let sheetData = null;
-                // Prioritas cek sku variasi (kolom 6), kemudian sku induk (kolom 5)
                 if (sku5_2 && hppMap.has(sku5_2)) {
                     sheetData = hppMap.get(sku5_2);
                 } else if (sku5_1 && hppMap.has(sku5_1)) {
@@ -721,7 +733,6 @@
                     item.target20 = 0;
                 }
 
-                // Kalkulasi Profit Real
                 if (item.price2 !== null && item.hppModal > 0) {
                     item.potongan = (item.price2 * 0.25) + 2600;
                     item.profit = item.price2 - item.potongan - item.hppModal;
@@ -736,6 +747,7 @@
             btnAnalyze.disabled = false;
             btnText.textContent = "Selesai Membandingkan!";
             btnIcon.className = "ph ph-check-circle text-xl";
+            missingFileWarning.classList.add('hidden'); // Sembunyikan jika ada
             
             setTimeout(() => {
                 btnText.textContent = "Bandingkan Ulang Harga";
@@ -767,7 +779,6 @@
 
         // 2. Tulis data yang disaring ke struktur aslinya
         mainFilteredData.forEach(item => {
-            // Cari baris original di file2FullData berdasarkan composite key (Kode Produk + Kode Variasi)
             const originalRow = file2FullData.find((r, idx) => {
                 if(idx < 3) return false;
                 const prod = String(r[colConfig.vProd2] || '').trim().toLowerCase();
@@ -778,14 +789,11 @@
             if (originalRow) {
                 let newRow = [...originalRow];
                 
-                // Ganti kolom harga dengan harga simulasi diskon
                 if (item.price1 > 0) {
                     const targetHargaDiskon = Math.round(item.price1 - (item.price1 * (customDiscountVal / 100)));
                     newRow[colConfig.vPrice2] = targetHargaDiskon;
                 }
 
-                // Proteksi SKU dengan menggunakan text formula agar 0 tidak hilang di MS Excel
-                // Format: ="01345"
                 if (colConfig.vProd2 >= 0 && newRow[colConfig.vProd2]) {
                     newRow[colConfig.vProd2] = `="${newRow[colConfig.vProd2]}"`;
                 }
@@ -793,12 +801,10 @@
                     newRow[colConfig.vVar2] = `="${newRow[colConfig.vVar2]}"`;
                 }
 
-                // Tambahkan elemen kosong jika array terpotong (menyesuaikan panjang kolom header)
                 while(newRow.length < file2FullData[0].length) {
                     newRow.push('');
                 }
 
-                // Konversi baris ke string CSV
                 const csvRowStr = newRow.map(val => {
                     const str = String(val || '').replace(/"/g, '""');
                     return `"${str}"`; 
@@ -842,7 +848,6 @@
             `;
         }
 
-        // Tampilan Simulasi Diskon Khusus
         let simulasiDiskonHtml = '';
         if (item.price1 > 0) {
             const targetHargaDiskon = item.price1 - (item.price1 * (customDiscountVal / 100));
@@ -854,7 +859,6 @@
             `;
         }
 
-        // Tampilan HPP
         let hppHtml = '-';
         if (item.hppModal === null) {
             hppHtml = `<i class="ph ph-spinner animate-spin text-lg text-slate-400"></i>`;
@@ -862,7 +866,6 @@
             hppHtml = `<span class="font-medium text-slate-700">${formatCurrency(item.hppModal)}</span>`;
         }
 
-        // Tampilan Kalkulasi Profit & Margin (Berdasarkan acuan harga di kolom GSheet)
         let marginHtml = '-';
         if (item.hppModal === null) {
             marginHtml = `<div class="flex items-center gap-1.5 text-xs text-slate-400 font-medium"><i class="ph ph-spinner animate-spin text-lg"></i> Mengkalkulasi...</div>`;
@@ -874,7 +877,6 @@
             let badgeClass = '';
             let badgeText = '';
             
-            // Penentuan margin berdasar target Google Sheets (Kolom AB, X, T)
             if (item.target20 > 0 && hJual >= item.target20) {
                 badgeClass = 'bg-green-100 text-green-700';
                 badgeText = '>= 20%';
@@ -892,7 +894,6 @@
                 badgeText = 'Rugi';
             }
 
-            // Teks Keterangan Target Margin di luar tooltip
             let targetTextHtml = '';
             if (badgeText === '>= 20%' && item.target20 > 0) {
                 const isAbove = hJual >= item.target20;
@@ -971,19 +972,16 @@
                 matchFilter = item.status === 'not_found';
             }
 
-            // Cek Margin Filter berdasar GSheet Targets (jika belum sinkron, abaikan dulu filternya)
             let matchMargin = true;
             if (marginThresh !== null) {
                 if (item.price2 === null || item.hppModal === null) {
                     matchMargin = false;
                 } else {
                     if (item.target20 > 0 || item.target15 > 0 || item.target10 > 0) {
-                        // Memanfaatkan acuan Google Sheet (AB, X, T)
                         if (marginThresh === 20 && item.price2 < item.target20) matchMargin = false;
                         if (marginThresh === 15 && item.price2 < item.target15) matchMargin = false;
                         if (marginThresh === 10 && item.price2 < item.target10) matchMargin = false;
                     } else {
-                        // Fallback jika tidak terhubung gsheet
                         if (item.marginPctActual < marginThresh) matchMargin = false;
                     }
                 }
@@ -1002,13 +1000,11 @@
         
         renderTable(pageData, tableBody);
 
-        // Update Info Paginasi Utama
         document.getElementById('mainPageInfo').innerHTML = `Hal ${mainCurrentPage} dari ${totalPages} <span class="text-slate-400 font-normal ml-1">(${mainFilteredData.length} data)</span>`;
         document.getElementById('btnMainPrevPage').disabled = mainCurrentPage === 1;
         document.getElementById('btnMainNextPage').disabled = mainCurrentPage === totalPages;
     };
 
-    // Listener Navigasi Utama
     document.getElementById('btnMainPrevPage').addEventListener('click', () => {
         if (mainCurrentPage > 1) {
             mainCurrentPage--;
@@ -1052,14 +1048,12 @@
         filterMainTable();
     });
 
-    // Event Listener Filter Margin
     selMarginFilter.addEventListener('change', (e) => {
         currentMainMarginFilter = e.target.value;
         mainCurrentPage = 1;
         filterMainTable();
     });
 
-    // Event Listener Pencarian Utama
     searchInput.addEventListener('input', () => {
         mainCurrentPage = 1;
         filterMainTable();
@@ -1075,19 +1069,16 @@
         else if (category === 'expensive') { title = "Daftar Lebih Mahal"; colorClass = "bg-red-50"; }
         else if (category === 'not_found') { title = "Daftar Tidak Ditemukan"; colorClass = "bg-orange-50"; }
 
-        // Tetapkan gaya header
         const modalHeader = document.getElementById('modalHeader');
         modalHeader.className = `p-5 border-b border-slate-100 flex justify-between items-center ${colorClass}`;
         document.getElementById('modalTitle').textContent = title;
 
-        // Reset state & ambil data sesuai kategori
         modalRawData = analysisResults.filter(item => item.status === category);
         document.getElementById('modalSearchInput').value = '';
         modalCurrentPage = 1;
         
         filterAndRenderModal();
         
-        // Tampilkan modal
         document.getElementById('dataModal').classList.remove('hidden');
     };
 
@@ -1098,7 +1089,6 @@
     const filterAndRenderModal = () => {
         const term = document.getElementById('modalSearchInput').value.toLowerCase();
         
-        // Filter Pencarian dalam Modal
         modalFilteredData = modalRawData.filter(item => 
             item.productCode.toLowerCase().includes(term) ||
             item.variationCode.toLowerCase().includes(term) ||
@@ -1107,7 +1097,6 @@
             item.sku2.toLowerCase().includes(term)
         );
 
-        // Kalkulasi Paginasi
         const totalPages = Math.ceil(modalFilteredData.length / ITEMS_PER_PAGE) || 1;
         if (modalCurrentPage > totalPages) modalCurrentPage = totalPages;
 
@@ -1115,19 +1104,15 @@
         const endIdx = startIdx + ITEMS_PER_PAGE;
         const pageData = modalFilteredData.slice(startIdx, endIdx);
 
-        // Tampilkan ke Tabel Modal
         renderTable(pageData, document.getElementById('modalTableBody'));
 
-        // Update Info UI Modal
         document.getElementById('modalSubtitle').innerHTML = `Total ditemukan: <strong>${modalFilteredData.length}</strong> data`;
         document.getElementById('modalPageInfo').textContent = `Hal ${modalCurrentPage} dari ${totalPages}`;
         
-        // Atur status disable tombol next/prev
         document.getElementById('btnPrevPage').disabled = modalCurrentPage === 1;
         document.getElementById('btnNextPage').disabled = modalCurrentPage === totalPages;
     };
 
-    // Event Listener Paginasi & Pencarian Modal
     document.getElementById('modalSearchInput').addEventListener('input', () => {
         modalCurrentPage = 1;
         filterAndRenderModal();
@@ -1168,6 +1153,7 @@
         btnReset.classList.add('hidden');
         actionContainer.classList.add('hidden');
         searchInput.value = '';
+        missingFileWarning.classList.add('hidden');
     });
 
 </script>
