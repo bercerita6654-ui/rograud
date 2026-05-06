@@ -18,6 +18,10 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* Hilangkan panah spinner bawaan input number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 md:p-8">
@@ -236,16 +240,22 @@
                 <table class="w-full text-left text-sm whitespace-nowrap">
                     <thead class="bg-slate-50 text-slate-600 font-medium sticky top-0 shadow-sm z-10 outline outline-1 outline-slate-100">
                         <tr>
-                            <th class="py-3 px-4 bg-slate-50">Produk, Variasi & SKU</th>
-                            <th class="py-3 px-4 bg-slate-50">Harga Awal (Data 1)</th>
-                            <th class="py-3 px-4 bg-slate-50">Harga Pembanding (Data 2)</th>
-                            <th class="py-3 px-4 bg-slate-50">Selisih</th>
-                            <th class="py-3 px-4 bg-slate-50">HPP (Modal)</th>
-                            <th class="py-3 px-4 bg-slate-50">
+                            <th class="py-3 px-4 bg-slate-50 align-top">Produk, Variasi & SKU</th>
+                            <th class="py-3 px-4 bg-slate-50 align-top">Harga Awal (Data 1)</th>
+                            <th class="py-3 px-4 bg-slate-50 align-top">Harga Pembanding (Data 2)</th>
+                            <th class="py-3 px-4 bg-slate-50 align-top">
+                                Selisih
+                                <div class="mt-1.5 flex items-center gap-1 text-[10px] text-slate-500 font-normal whitespace-nowrap">
+                                    Simulasi Diskon: 
+                                    <input type="number" id="mainCustomDiscount" value="5" class="w-12 px-1 py-0.5 border border-slate-300 bg-white rounded text-center text-slate-800 focus:outline-blue-500" /> %
+                                </div>
+                            </th>
+                            <th class="py-3 px-4 bg-slate-50 align-top">HPP (Modal)</th>
+                            <th class="py-3 px-4 bg-slate-50 align-top">
                                 Est. Profit & Margin
                                 <div class="text-[10px] text-slate-400 font-normal mt-0.5">Ref: Google Sheets</div>
                             </th>
-                            <th class="py-3 px-4 bg-slate-50">Status</th>
+                            <th class="py-3 px-4 bg-slate-50 align-top">Status</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-50">
@@ -312,16 +322,22 @@
             <table class="w-full text-left text-sm whitespace-nowrap relative">
                 <thead class="bg-slate-50 text-slate-600 font-medium sticky top-0 shadow-sm z-10 outline outline-1 outline-slate-100">
                     <tr>
-                        <th class="py-3 px-4 bg-slate-50">Produk, Variasi & SKU</th>
-                        <th class="py-3 px-4 bg-slate-50">Harga Awal (Data 1)</th>
-                        <th class="py-3 px-4 bg-slate-50">Harga Pembanding (Data 2)</th>
-                        <th class="py-3 px-4 bg-slate-50">Selisih</th>
-                        <th class="py-3 px-4 bg-slate-50">HPP (Modal)</th>
-                        <th class="py-3 px-4 bg-slate-50">
+                        <th class="py-3 px-4 bg-slate-50 align-top">Produk, Variasi & SKU</th>
+                        <th class="py-3 px-4 bg-slate-50 align-top">Harga Awal (Data 1)</th>
+                        <th class="py-3 px-4 bg-slate-50 align-top">Harga Pembanding (Data 2)</th>
+                        <th class="py-3 px-4 bg-slate-50 align-top">
+                            Selisih
+                            <div class="mt-1.5 flex items-center gap-1 text-[10px] text-slate-500 font-normal whitespace-nowrap">
+                                Simulasi Diskon: 
+                                <input type="number" id="modalCustomDiscount" value="5" class="w-12 px-1 py-0.5 border border-slate-300 bg-white rounded text-center text-slate-800 focus:outline-blue-500" /> %
+                            </div>
+                        </th>
+                        <th class="py-3 px-4 bg-slate-50 align-top">HPP (Modal)</th>
+                        <th class="py-3 px-4 bg-slate-50 align-top">
                             Est. Profit & Margin
                             <div class="text-[10px] text-slate-400 font-normal mt-0.5">Ref: Google Sheets</div>
                         </th>
-                        <th class="py-3 px-4 bg-slate-50">Status</th>
+                        <th class="py-3 px-4 bg-slate-50 align-top">Status</th>
                     </tr>
                 </thead>
                 <tbody id="modalTableBody" class="divide-y divide-slate-50">
@@ -337,6 +353,7 @@
     let file1Data = []; 
     let file2Data = [];
     let analysisResults = [];
+    let customDiscountVal = 5; // Nilai simulasi persentase diskon
     
     // Main Table State Management
     let currentMainFilter = 'all'; // 'all', 'found', 'not_found'
@@ -372,6 +389,25 @@
     const btnFilterNotFound = document.getElementById('btnFilterNotFound');
     const selMarginFilter = document.getElementById('selMarginFilter');
     const btnExportCSV = document.getElementById('btnExportCSV');
+    const mainCustomDiscount = document.getElementById('mainCustomDiscount');
+    const modalCustomDiscount = document.getElementById('modalCustomDiscount');
+
+    // Listener Simulasi Diskon
+    if(mainCustomDiscount) {
+        mainCustomDiscount.addEventListener('input', (e) => {
+            customDiscountVal = parseFloat(e.target.value) || 0;
+            if(modalCustomDiscount) modalCustomDiscount.value = e.target.value;
+            filterMainTable();
+        });
+    }
+
+    if(modalCustomDiscount) {
+        modalCustomDiscount.addEventListener('input', (e) => {
+            customDiscountVal = parseFloat(e.target.value) || 0;
+            if(mainCustomDiscount) mainCustomDiscount.value = e.target.value;
+            filterAndRenderModal();
+        });
+    }
 
     // Utilitas: Format Mata Uang
     const formatCurrency = (val) => {
@@ -761,6 +797,18 @@
             `;
         }
 
+        // Tampilan Simulasi Diskon Khusus
+        let simulasiDiskonHtml = '';
+        if (item.price1 > 0) {
+            const targetHargaDiskon = item.price1 - (item.price1 * (customDiscountVal / 100));
+            simulasiDiskonHtml = `
+                <div class="text-[10px] text-slate-500 mt-1.5 border-t border-slate-100 pt-1.5">
+                    Jika Diskon <span class="font-bold text-slate-700">${customDiscountVal}%</span>:<br/>
+                    <span class="font-bold text-blue-600">${formatCurrency(targetHargaDiskon)}</span>
+                </div>
+            `;
+        }
+
         // Tampilan HPP
         let hppHtml = '-';
         if (item.hppModal === null) {
@@ -803,24 +851,24 @@
             let targetTextHtml = '';
             if (badgeText === '>= 20%' && item.target20 > 0) {
                 const isAbove = hJual >= item.target20;
-                targetTextHtml = `<div class="text-[10px] font-medium mt-1 ${isAbove ? 'text-green-600' : 'text-red-600'}">harga di ${isAbove ? 'atas' : 'bawah'} dari ${formatCurrency(item.target20)}</div>`;
+                targetTextHtml = `<div class="text-[10px] font-medium mt-1.5 ${isAbove ? 'text-green-600' : 'text-red-600'}">harga di ${isAbove ? 'atas' : 'bawah'} dari ${formatCurrency(item.target20)}</div>`;
             } else if (badgeText === '>= 15%' && item.target15 > 0) {
                 const isAbove = hJual >= item.target15;
-                targetTextHtml = `<div class="text-[10px] font-medium mt-1 ${isAbove ? 'text-green-600' : 'text-red-600'}">harga di ${isAbove ? 'atas' : 'bawah'} dari ${formatCurrency(item.target15)}</div>`;
+                targetTextHtml = `<div class="text-[10px] font-medium mt-1.5 ${isAbove ? 'text-green-600' : 'text-red-600'}">harga di ${isAbove ? 'atas' : 'bawah'} dari ${formatCurrency(item.target15)}</div>`;
             } else if (badgeText === '>= 10%' && item.target10 > 0) {
                 const isAbove = hJual >= item.target10;
-                targetTextHtml = `<div class="text-[10px] font-medium mt-1 ${isAbove ? 'text-green-600' : 'text-red-600'}">harga di ${isAbove ? 'atas' : 'bawah'} dari ${formatCurrency(item.target10)}</div>`;
+                targetTextHtml = `<div class="text-[10px] font-medium mt-1.5 ${isAbove ? 'text-green-600' : 'text-red-600'}">harga di ${isAbove ? 'atas' : 'bawah'} dari ${formatCurrency(item.target10)}</div>`;
             }
 
             marginHtml = `
                 <div class="flex flex-col">
                     <span class="${profit >= 0 ? 'text-green-600' : 'text-red-600'} font-medium whitespace-nowrap">${profit > 0 ? '+' : ''}${formatCurrency(profit)}</span>
-                    <div class="flex items-center gap-1.5 mt-1">
+                    <div class="flex items-center gap-1.5 mt-1 relative group w-max">
                         <span class="text-xs font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${item.marginPctActual.toFixed(1)}%</span>
                         <span class="px-1.5 py-0.5 rounded text-[10px] font-bold whitespace-nowrap ${badgeClass}">${badgeText}</span>
                     </div>
                     ${targetTextHtml}
-                    <span class="text-[10px] text-slate-400 mt-1 border-t border-slate-100 pt-1" title="Potongan: 25% (Admin, Lyn, Asuransi, Affiliate) + Rp2.600 (Packing & Proses)">Pot. ${formatCurrency(potongan)}</span>
+                    <span class="text-[10px] text-slate-400 mt-1.5 border-t border-slate-100 pt-1" title="Potongan: 25% (Admin, Lyn, Asuransi, Affiliate) + Rp2.600 (Packing & Proses)">Pot. ${formatCurrency(potongan)}</span>
                 </div>
             `;
         }
@@ -829,18 +877,21 @@
 
         return `
             <tr class="hover:bg-slate-50 transition-colors">
-                <td class="py-3 px-4">
+                <td class="py-3 px-4 align-top">
                     <div class="font-medium text-slate-800">${item.productCode}</div>
                     ${item.variationCode ? `<div class="text-xs font-semibold text-blue-600">${item.variationCode}</div>` : ''}
                     ${skus ? `<div class="text-xs text-slate-500 mt-1">SKU: ${skus}</div>` : ''}
                     <div class="text-xs text-slate-500 truncate max-w-[250px]" title="${item.name}">${item.name}</div>
                 </td>
-                <td class="py-3 px-4 text-slate-600">${formatCurrency(item.price1)}</td>
-                <td class="py-3 px-4 text-slate-600">${item.price2 !== null ? formatCurrency(item.price2) : '-'}</td>
-                <td class="py-3 px-4 font-medium">${diffHtml}</td>
-                <td class="py-3 px-4">${hppHtml}</td>
-                <td class="py-3 px-4">${marginHtml}</td>
-                <td class="py-3 px-4">${statusBadge}</td>
+                <td class="py-3 px-4 text-slate-600 align-top">${formatCurrency(item.price1)}</td>
+                <td class="py-3 px-4 text-slate-600 align-top">${item.price2 !== null ? formatCurrency(item.price2) : '-'}</td>
+                <td class="py-3 px-4 font-medium align-top">
+                    ${diffHtml}
+                    ${simulasiDiskonHtml}
+                </td>
+                <td class="py-3 px-4 align-top">${hppHtml}</td>
+                <td class="py-3 px-4 align-top">${marginHtml}</td>
+                <td class="py-3 px-4 align-top">${statusBadge}</td>
             </tr>
         `;
     };
@@ -1058,6 +1109,9 @@
         file2Data = [];
         input1.value = '';
         input2.value = '';
+        customDiscountVal = 5;
+        if(mainCustomDiscount) mainCustomDiscount.value = '5';
+        if(modalCustomDiscount) modalCustomDiscount.value = '5';
         
         dropzone1.classList.remove('hidden');
         config1.classList.add('hidden');
