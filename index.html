@@ -218,8 +218,8 @@
             <div class="p-4 border-b border-slate-100 flex flex-col gap-4 bg-slate-50/50">
                 <div class="flex justify-between items-center w-full">
                     <h3 class="font-semibold text-slate-800">Detail Semua Perbandingan</h3>
-                    <button id="btnExportCSV" class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm" title="Download data yang dicentang sesuai format Data 2">
-                        <i class="ph ph-download-simple"></i> Download CSV Terpilih (<span id="selectedCount">0</span>)
+                    <button id="btnExportExcel" class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm" title="Download data yang dicentang sesuai format Data 2">
+                        <i class="ph ph-file-xls"></i> Download Excel Terpilih (<span id="selectedCount">0</span>)
                     </button>
                 </div>
                 
@@ -409,7 +409,7 @@
     const btnFilterFound = document.getElementById('btnFilterFound');
     const btnFilterNotFound = document.getElementById('btnFilterNotFound');
     const selMarginFilter = document.getElementById('selMarginFilter');
-    const btnExportCSV = document.getElementById('btnExportCSV');
+    const btnExportExcel = document.getElementById('btnExportExcel');
     const mainCustomDiscount = document.getElementById('mainCustomDiscount');
     const modalCustomDiscount = document.getElementById('modalCustomDiscount');
     const missingFileWarning = document.getElementById('missingFileWarning');
@@ -422,9 +422,6 @@
     // Update Counter UI
     const updateSelectedCount = () => {
         selectedCountLabel.textContent = selectedDataIds.size;
-        // Opsional: Disable tombol jika kosong
-        // btnExportCSV.disabled = selectedDataIds.size === 0;
-        // btnExportCSV.classList.toggle('opacity-50', selectedDataIds.size === 0);
     };
 
     // --- Cek All Checkbox Logic ---
@@ -827,23 +824,19 @@
         }, 100); 
     });
 
-    // Ekspor ke CSV Format Original Data 2 (Shopee Mass Update) - HANYA DATA TERPILIH
-    btnExportCSV.addEventListener('click', () => {
+    // Ekspor ke XLSX Format Original Data 2 (Shopee Mass Update) - HANYA DATA TERPILIH
+    btnExportExcel.addEventListener('click', () => {
         if (selectedDataIds.size === 0) {
             alert("Silakan centang (pilih) minimal satu data pada tabel untuk mendownload hasilnya.");
             return;
         }
 
-        let csvContent = "";
+        let exportDataAOA = [];
         
         // 1. Tulis 3 baris pertama (Panduan dan Header Asli Data 2)
         for (let i = 0; i < 3; i++) {
             if (file2FullData[i]) {
-                const rowStr = file2FullData[i].map(val => {
-                    const str = String(val || '').replace(/"/g, '""');
-                    return `"${str}"`;
-                });
-                csvContent += rowStr.join(",") + "\n";
+                exportDataAOA.push([...file2FullData[i]]);
             }
         }
 
@@ -862,38 +855,36 @@
             if (originalRow) {
                 let newRow = [...originalRow];
                 
+                // Merubah harga dengan simulasi diskon
                 if (item.price1 > 0) {
                     const targetHargaDiskon = Math.round(item.price1 - (item.price1 * (customDiscountVal / 100)));
                     newRow[colConfig.vPrice2] = targetHargaDiskon;
                 }
 
+                // Menjaga SKU (Angka 0 di depan) dengan mengubahnya menjadi String murni untuk Excel
                 if (colConfig.vProd2 >= 0 && newRow[colConfig.vProd2]) {
-                    newRow[colConfig.vProd2] = `="${newRow[colConfig.vProd2]}"`;
+                    newRow[colConfig.vProd2] = String(newRow[colConfig.vProd2]);
                 }
                 if (colConfig.vVar2 >= 0 && newRow[colConfig.vVar2]) {
-                    newRow[colConfig.vVar2] = `="${newRow[colConfig.vVar2]}"`;
+                    newRow[colConfig.vVar2] = String(newRow[colConfig.vVar2]);
                 }
 
+                // Tambahkan elemen kosong jika array terpotong menyesuaikan header
                 while(newRow.length < file2FullData[0].length) {
                     newRow.push('');
                 }
 
-                const csvRowStr = newRow.map(val => {
-                    const str = String(val || '').replace(/"/g, '""');
-                    return `"${str}"`; 
-                });
-                csvContent += csvRowStr.join(",") + "\n";
+                exportDataAOA.push(newRow);
             }
         });
 
-        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', 'Mass_Update_Diskon_Shopee.csv');
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Buat Worksheet & Workbook
+        const ws = XLSX.utils.aoa_to_sheet(exportDataAOA);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Template_Shopee");
+
+        // Download file Excel
+        XLSX.writeFile(wb, 'Mass_Update_Diskon_Shopee.xlsx');
     });
 
     // Helper: Generate string HTML untuk baris tabel
