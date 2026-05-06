@@ -855,10 +855,23 @@
             if (originalRow) {
                 let newRow = [...originalRow];
                 
+                // Tambahkan elemen kosong jika array terpotong menyesuaikan header
+                while(newRow.length < file2FullData[0].length) {
+                    newRow.push('');
+                }
+
                 // Merubah harga dengan simulasi diskon
                 if (item.price1 > 0) {
                     const targetHargaDiskon = Math.round(item.price1 - (item.price1 * (customDiscountVal / 100)));
-                    newRow[colConfig.vPrice2] = targetHargaDiskon;
+                    newRow[colConfig.vPrice2] = targetHargaDiskon; // Update Kolom K (10)
+                    
+                    // MENYAMAKAN KOLOM L DENGAN KOLOM K
+                    // Format Shopee: Kolom K (index 10) = Harga Diskon, Kolom L (index 11) = Rekomendasi Harga Diskon
+                    if (colConfig.vPrice2 !== undefined) {
+                        newRow[11] = newRow[colConfig.vPrice2];
+                    } else {
+                        newRow[11] = newRow[10]; // Default jika vPrice2 tidak terdeteksi
+                    }
                 }
 
                 // Menjaga SKU (Angka 0 di depan) dengan mengubahnya menjadi String murni untuk Excel
@@ -867,11 +880,6 @@
                 }
                 if (colConfig.vVar2 >= 0 && newRow[colConfig.vVar2]) {
                     newRow[colConfig.vVar2] = String(newRow[colConfig.vVar2]);
-                }
-
-                // Tambahkan elemen kosong jika array terpotong menyesuaikan header
-                while(newRow.length < file2FullData[0].length) {
-                    newRow.push('');
                 }
 
                 exportDataAOA.push(newRow);
@@ -883,8 +891,16 @@
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Template_Shopee");
 
+        // Format nama file dengan tanggal realtime
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const month = months[now.getMonth()];
+        const year = now.getFullYear();
+        const fileName = `Campain_shopee_${day}-${month}-${year}.xlsx`;
+
         // Download file Excel
-        XLSX.writeFile(wb, 'Mass_Update_Diskon_Shopee.xlsx');
+        XLSX.writeFile(wb, fileName);
     });
 
     // Helper: Generate string HTML untuk baris tabel
