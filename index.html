@@ -369,6 +369,7 @@
     let file1Data = []; 
     let file2Data = [];
     let file2FullData = []; // Untuk menyimpan data 2 secara lengkap beserta header 3 baris
+    let file2SheetName = "Sheet1"; // Simpan nama sheet asli dari Data 2
     let analysisResults = [];
     let customDiscountVal = 5; // Nilai simulasi persentase diskon
     let colConfig = {}; // Simpan referensi indeks kolom
@@ -589,6 +590,7 @@
                     dropzone1.classList.add('hidden');
                     config1.classList.remove('hidden');
                 } else {
+                    file2SheetName = firstSheetName; // Mengamankan nama sheet aslinya
                     const headerRow = aoa[0]; 
                     file2FullData = aoa; 
                     file2Data = aoa.slice(3); 
@@ -863,23 +865,19 @@
                 // Merubah harga dengan simulasi diskon
                 if (item.price1 > 0) {
                     const targetHargaDiskon = Math.round(item.price1 - (item.price1 * (customDiscountVal / 100)));
-                    newRow[colConfig.vPrice2] = targetHargaDiskon; // Update Kolom K (10)
                     
-                    // MENYAMAKAN KOLOM L DENGAN KOLOM K
-                    // Format Shopee: Kolom K (index 10) = Harga Diskon, Kolom L (index 11) = Rekomendasi Harga Diskon
-                    if (colConfig.vPrice2 !== undefined) {
-                        newRow[11] = newRow[colConfig.vPrice2];
-                    } else {
-                        newRow[11] = newRow[10]; // Default jika vPrice2 tidak terdeteksi
-                    }
+                    // SHOPEE FORMAT: Kolom 10 adalah Harga Diskon, Kolom 11 adalah Rekomendasi Harga Diskon
+                    // Memaksa menimpa kolom ke 10 dan 11 agar benar-benar persis.
+                    newRow[10] = targetHargaDiskon; 
+                    newRow[11] = targetHargaDiskon; 
                 }
 
-                // Menjaga SKU (Angka 0 di depan) dengan mengubahnya menjadi String murni untuk Excel
+                // Menjaga SKU (Angka 0 di depan) dengan mengubahnya menjadi objek string murni untuk SheetJS
                 if (colConfig.vProd2 >= 0 && newRow[colConfig.vProd2]) {
-                    newRow[colConfig.vProd2] = String(newRow[colConfig.vProd2]);
+                    newRow[colConfig.vProd2] = { t: 's', v: String(newRow[colConfig.vProd2]) };
                 }
                 if (colConfig.vVar2 >= 0 && newRow[colConfig.vVar2]) {
-                    newRow[colConfig.vVar2] = String(newRow[colConfig.vVar2]);
+                    newRow[colConfig.vVar2] = { t: 's', v: String(newRow[colConfig.vVar2]) };
                 }
 
                 exportDataAOA.push(newRow);
@@ -889,7 +887,7 @@
         // Buat Worksheet & Workbook
         const ws = XLSX.utils.aoa_to_sheet(exportDataAOA);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Template_Shopee");
+        XLSX.utils.book_append_sheet(wb, ws, file2SheetName); // Gunakan nama sheet dari data asli
 
         // Format nama file dengan tanggal realtime
         const now = new Date();
