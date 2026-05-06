@@ -258,6 +258,7 @@
                             </th>
                             <th class="py-3 px-4 bg-slate-50 align-top">Produk, Variasi & SKU</th>
                             <th class="py-3 px-4 bg-slate-50 align-top">Harga Awal (Data 1)</th>
+                            <th class="py-3 px-4 bg-slate-50 align-top">Min Diskon yang di inginkan</th>
                             <th class="py-3 px-4 bg-slate-50 align-top">Harga Pembanding (Data 2)</th>
                             <th class="py-3 px-4 bg-slate-50 align-top">
                                 Selisih
@@ -271,7 +272,6 @@
                                 Est. Profit & Margin
                                 <div class="text-[10px] text-slate-400 font-normal mt-0.5">Ref: Google Sheets</div>
                             </th>
-                            <th class="py-3 px-4 bg-slate-50 align-top">Status</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-50">
@@ -340,6 +340,7 @@
                     <tr>
                         <th class="py-3 px-4 bg-slate-50 align-top">Produk, Variasi & SKU</th>
                         <th class="py-3 px-4 bg-slate-50 align-top">Harga Awal (Data 1)</th>
+                        <th class="py-3 px-4 bg-slate-50 align-top">Min Diskon yang di inginkan</th>
                         <th class="py-3 px-4 bg-slate-50 align-top">Harga Pembanding (Data 2)</th>
                         <th class="py-3 px-4 bg-slate-50 align-top">
                             Selisih
@@ -353,7 +354,6 @@
                             Est. Profit & Margin
                             <div class="text-[10px] text-slate-400 font-normal mt-0.5">Ref: Google Sheets</div>
                         </th>
-                        <th class="py-3 px-4 bg-slate-50 align-top">Status</th>
                     </tr>
                 </thead>
                 <tbody id="modalTableBody" class="divide-y divide-slate-50">
@@ -1012,6 +1012,7 @@
                     <div class="text-xs text-slate-500 truncate max-w-[250px]" title="${item.name}">${item.name}</div>
                 </td>
                 <td class="py-3 px-4 text-slate-600 align-top">${formatCurrency(item.price1)}</td>
+                <td class="py-3 px-4 align-top">${statusBadge}</td>
                 <td class="py-3 px-4 text-slate-600 align-top">${item.price2 !== null ? formatCurrency(item.price2) : '-'}</td>
                 <td class="py-3 px-4 font-medium align-top">
                     ${diffHtml}
@@ -1019,7 +1020,6 @@
                 </td>
                 <td class="py-3 px-4 align-top">${hppHtml}</td>
                 <td class="py-3 px-4 align-top">${marginHtml}</td>
-                <td class="py-3 px-4 align-top">${statusBadge}</td>
             </tr>
         `;
     };
