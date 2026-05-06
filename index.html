@@ -22,6 +22,16 @@
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
+        
+        /* Checkbox styling */
+        .checkbox-custom {
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 0.25rem;
+            border: 1px solid #cbd5e1;
+            cursor: pointer;
+            accent-color: #2563eb;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 md:p-8">
@@ -208,8 +218,8 @@
             <div class="p-4 border-b border-slate-100 flex flex-col gap-4 bg-slate-50/50">
                 <div class="flex justify-between items-center w-full">
                     <h3 class="font-semibold text-slate-800">Detail Semua Perbandingan</h3>
-                    <button id="btnExportCSV" class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm" title="Download struktur Data 2 dengan Harga Diskon baru">
-                        <i class="ph ph-download-simple"></i> Download CSV (Format Data 2)
+                    <button id="btnExportCSV" class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm" title="Download data yang dicentang sesuai format Data 2">
+                        <i class="ph ph-download-simple"></i> Download CSV Terpilih (<span id="selectedCount">0</span>)
                     </button>
                 </div>
                 
@@ -239,10 +249,13 @@
                 </div>
             </div>
             
-            <div class="overflow-auto max-h-[600px] custom-scrollbar border-b border-slate-100">
+            <div class="overflow-auto max-h-[600px] custom-scrollbar border-b border-slate-100 relative">
                 <table class="w-full text-left text-sm whitespace-nowrap">
                     <thead class="bg-slate-50 text-slate-600 font-medium sticky top-0 shadow-sm z-10 outline outline-1 outline-slate-100">
                         <tr>
+                            <th class="py-3 px-4 bg-slate-50 align-top w-12 text-center">
+                                <input type="checkbox" id="selectAllCheckbox" class="checkbox-custom" title="Pilih Semua Data di Halaman Ini" />
+                            </th>
                             <th class="py-3 px-4 bg-slate-50 align-top">Produk, Variasi & SKU</th>
                             <th class="py-3 px-4 bg-slate-50 align-top">Harga Awal (Data 1)</th>
                             <th class="py-3 px-4 bg-slate-50 align-top">Harga Pembanding (Data 2)</th>
@@ -321,8 +334,8 @@
         </div>
 
         <!-- Modal Table -->
-        <div class="flex-1 overflow-auto custom-scrollbar">
-            <table class="w-full text-left text-sm whitespace-nowrap relative">
+        <div class="flex-1 overflow-auto custom-scrollbar relative">
+            <table class="w-full text-left text-sm whitespace-nowrap">
                 <thead class="bg-slate-50 text-slate-600 font-medium sticky top-0 shadow-sm z-10 outline outline-1 outline-slate-100">
                     <tr>
                         <th class="py-3 px-4 bg-slate-50 align-top">Produk, Variasi & SKU</th>
@@ -359,6 +372,9 @@
     let analysisResults = [];
     let customDiscountVal = 5; // Nilai simulasi persentase diskon
     let colConfig = {}; // Simpan referensi indeks kolom
+    
+    // State Penyimpanan Data yang Dipilih (Checkbox)
+    let selectedDataIds = new Set(); // Menggunakan composite key (ProdCode|||VarCode) sebagai ID
     
     // Main Table State Management
     let currentMainFilter = 'all'; // 'all', 'found', 'not_found'
@@ -397,6 +413,64 @@
     const mainCustomDiscount = document.getElementById('mainCustomDiscount');
     const modalCustomDiscount = document.getElementById('modalCustomDiscount');
     const missingFileWarning = document.getElementById('missingFileWarning');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const selectedCountLabel = document.getElementById('selectedCount');
+
+    // Helper: Buat Composite Key
+    const makeKey = (prod, varCode) => `${String(prod || '').trim().toLowerCase()}|||${String(varCode || '').trim().toLowerCase()}`;
+
+    // Update Counter UI
+    const updateSelectedCount = () => {
+        selectedCountLabel.textContent = selectedDataIds.size;
+        // Opsional: Disable tombol jika kosong
+        // btnExportCSV.disabled = selectedDataIds.size === 0;
+        // btnExportCSV.classList.toggle('opacity-50', selectedDataIds.size === 0);
+    };
+
+    // --- Cek All Checkbox Logic ---
+    selectAllCheckbox.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const currentCheckboxes = document.querySelectorAll('.row-checkbox');
+        
+        currentCheckboxes.forEach(cb => {
+            cb.checked = isChecked;
+            const rowId = cb.dataset.id;
+            if (isChecked) {
+                selectedDataIds.add(rowId);
+            } else {
+                selectedDataIds.delete(rowId);
+            }
+        });
+        
+        updateSelectedCount();
+    });
+
+    // Update state Check All ketika individu di-klik
+    const updateCheckAllState = () => {
+        const currentCheckboxes = document.querySelectorAll('.row-checkbox');
+        if(currentCheckboxes.length === 0) {
+            selectAllCheckbox.checked = false;
+            return;
+        }
+        
+        let allChecked = true;
+        currentCheckboxes.forEach(cb => {
+            if(!cb.checked) allChecked = false;
+        });
+        selectAllCheckbox.checked = allChecked;
+    };
+
+    // Fungsi global agar bisa dipanggil inline dari baris tabel HTML
+    window.toggleRowSelection = (checkboxElem, rowId) => {
+        if(checkboxElem.checked) {
+            selectedDataIds.add(rowId);
+        } else {
+            selectedDataIds.delete(rowId);
+        }
+        updateSelectedCount();
+        updateCheckAllState();
+    };
+
 
     // Listener Simulasi Diskon
     if(mainCustomDiscount) {
@@ -425,13 +499,12 @@
         }).format(val);
     };
 
-    // Utilitas Cerdas: Parse Harga string ke angka (Mendeteksi format 15.000 vs 15,000)
+    // Utilitas Cerdas: Parse Harga string ke angka 
     const parsePrice = (val) => {
         if (!val) return 0;
         if (typeof val === 'number') return val;
         let s = val.toString().replace(/Rp|rp|\s/g, '');
         
-        // Deteksi desimal berdasarkan pola koma/titik diikuti 1-2 digit di akhir
         if (/,\d{1,2}$/.test(s)) {
             s = s.replace(/\./g, '').replace(',', '.');
         } else if (/\.\d{1,2}$/.test(s)) {
@@ -444,27 +517,24 @@
         return isNaN(parsed) ? 0 : parsed;
     };
 
-    // Helper: Ambil Nilai Int dari Select
     const getVal = (id) => {
         const val = document.getElementById(id).value;
         return val === '' ? -1 : parseInt(val);
     };
 
-    // Utilitas Cerdas: Ekstrak 4-5 digit SKU 
     const extract5DigitSKU = (str) => {
         if (!str) return null;
         const matches = String(str).match(/\d+/g);
         if (matches) {
             for (let num of matches) {
                 if (num.length >= 4 && num.length <= 5) {
-                    return num.padStart(5, '0'); // Pad menjadi 5 digit secara otomatis
+                    return num.padStart(5, '0'); 
                 }
             }
         }
         return null;
     };
 
-    // Isi pilihan Select dengan Indeks Array
     const populateSelect = (selectId, headersRow, maxCols, defaultIndex, addEmptyOption = false) => {
         const select = document.getElementById(selectId);
         select.innerHTML = '';
@@ -485,7 +555,6 @@
         }
     };
 
-    // Handle Unggah File
     const processFile = (file, isFile1) => {
         if (!file) return;
         
@@ -552,11 +621,9 @@
     input2.addEventListener('change', (e) => processFile(e.target.files[0], false));
 
     const checkBothFilesLoaded = () => {
-        // Tampilkan container tombol jika salah satu file sudah diunggah
         if (file1Data.length > 0 || file2Data.length > 0) {
             actionContainer.classList.remove('hidden');
             
-            // Evaluasi apakah kedua file sudah lengkap
             if (file1Data.length > 0 && file2Data.length > 0) {
                 btnAnalyze.disabled = false;
                 missingFileWarning.classList.add('hidden');
@@ -592,8 +659,6 @@
                 vPrice2: getVal('selPrice2')
             };
 
-            const makeKey = (prod, varCode) => `${String(prod || '').trim().toLowerCase()}|||${String(varCode || '').trim().toLowerCase()}`;
-
             const map2 = new Map();
             file2Data.forEach(row => {
                 const prodVal = colConfig.vProd2 >= 0 ? row[colConfig.vProd2] : '';
@@ -603,6 +668,10 @@
             });
 
             analysisResults = [];
+            // Reset Seleksi yang lalu
+            selectedDataIds.clear();
+            updateSelectedCount();
+            
             let stats = { total: 0, cheaper: 0, expensive: 0, same: 0, notFound: 0 };
 
             // TAHAP 1: Bandingkan Data 1 dengan Data 2
@@ -641,6 +710,7 @@
                 }
 
                 analysisResults.push({
+                    id: searchKey, // Simpan ID komposit untuk keperluan checkbox
                     productCode: rawProduct,
                     variationCode: rawVariation,
                     sku1: rawSku1,
@@ -709,7 +779,7 @@
                 console.error("Gagal mengambil data HPP dari CSV:", err);
             }
 
-            // TAHAP 3: Cocokkan & Kalkulasi Margin berdasarkan Harga Target (Kolom T, X, AB)
+            // TAHAP 3: Cocokkan & Kalkulasi Margin
             analysisResults.forEach(item => {
                 const sku5_1 = extract5DigitSKU(item.sku1);
                 const sku5_2 = extract5DigitSKU(item.sku2);
@@ -747,7 +817,7 @@
             btnAnalyze.disabled = false;
             btnText.textContent = "Selesai Membandingkan!";
             btnIcon.className = "ph ph-check-circle text-xl";
-            missingFileWarning.classList.add('hidden'); // Sembunyikan jika ada
+            missingFileWarning.classList.add('hidden'); 
             
             setTimeout(() => {
                 btnText.textContent = "Bandingkan Ulang Harga";
@@ -757,10 +827,10 @@
         }, 100); 
     });
 
-    // Ekspor ke CSV Format Original Data 2 (Shopee Mass Update)
+    // Ekspor ke CSV Format Original Data 2 (Shopee Mass Update) - HANYA DATA TERPILIH
     btnExportCSV.addEventListener('click', () => {
-        if (mainFilteredData.length === 0) {
-            alert("Tidak ada data untuk di-download berdasarkan filter saat ini.");
+        if (selectedDataIds.size === 0) {
+            alert("Silakan centang (pilih) minimal satu data pada tabel untuk mendownload hasilnya.");
             return;
         }
 
@@ -777,8 +847,11 @@
             }
         }
 
-        // 2. Tulis data yang disaring ke struktur aslinya
-        mainFilteredData.forEach(item => {
+        // 2. Ambil data asli dari object analysisResults berdasar ID yang dicentang
+        const selectedItemsToExport = analysisResults.filter(item => selectedDataIds.has(item.id));
+
+        // 3. Tulis data yang disaring ke struktur aslinya
+        selectedItemsToExport.forEach(item => {
             const originalRow = file2FullData.find((r, idx) => {
                 if(idx < 3) return false;
                 const prod = String(r[colConfig.vProd2] || '').trim().toLowerCase();
@@ -920,9 +993,13 @@
         }
 
         const skus = [item.sku1, item.sku2].filter(Boolean).join(' / ');
+        const isChecked = selectedDataIds.has(item.id) ? 'checked' : '';
 
         return `
             <tr class="hover:bg-slate-50 transition-colors">
+                <td class="py-3 px-4 align-top text-center">
+                    <input type="checkbox" class="checkbox-custom row-checkbox" data-id="${item.id}" ${isChecked} onchange="toggleRowSelection(this, '${item.id}')" />
+                </td>
                 <td class="py-3 px-4 align-top">
                     <div class="font-medium text-slate-800">${item.productCode}</div>
                     ${item.variationCode ? `<div class="text-xs font-semibold text-blue-600">${item.variationCode}</div>` : ''}
@@ -945,10 +1022,12 @@
     // Helper Menampilkan Tabel
     const renderTable = (data, targetBody) => {
         if (data.length === 0) {
-            targetBody.innerHTML = `<tr><td colSpan="7" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
+            targetBody.innerHTML = `<tr><td colSpan="8" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
+            updateCheckAllState();
             return;
         }
         targetBody.innerHTML = data.map(item => generateRowHTML(item)).join('');
+        updateCheckAllState();
     };
 
     // --- Logika Paginasi & Filter Tabel Utama ---
@@ -1059,7 +1138,7 @@
         filterMainTable();
     });
 
-    // --- Logika Modal & Paginasi (Maks 50) ---
+    // --- Logika Modal & Paginasi ---
 
     const openModal = (category) => {
         let title = "";
@@ -1104,7 +1183,18 @@
         const endIdx = startIdx + ITEMS_PER_PAGE;
         const pageData = modalFilteredData.slice(startIdx, endIdx);
 
-        renderTable(pageData, document.getElementById('modalTableBody'));
+        // Jangan merender checkbox pada modal agar tidak bingung (hanya untuk main table)
+        // Kita modifikasi dikit fungsi render untuk modal (tanpa hapus rowHTML utama)
+        const modalTableBody = document.getElementById('modalTableBody');
+        if (pageData.length === 0) {
+            modalTableBody.innerHTML = `<tr><td colSpan="6" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
+        } else {
+             // Kita reuse generateRowHTML tapi buang tag <td> pertama (kolom checkbox)
+             modalTableBody.innerHTML = pageData.map(item => {
+                 let rowStr = generateRowHTML(item);
+                 return rowStr.replace(/<td class="py-3 px-4 align-top text-center">[\s\S]*?<\/td>/, '');
+             }).join('');
+        }
 
         document.getElementById('modalSubtitle').innerHTML = `Total ditemukan: <strong>${modalFilteredData.length}</strong> data`;
         document.getElementById('modalPageInfo').textContent = `Hal ${modalCurrentPage} dari ${totalPages}`;
@@ -1142,6 +1232,9 @@
         customDiscountVal = 5;
         if(mainCustomDiscount) mainCustomDiscount.value = '5';
         if(modalCustomDiscount) modalCustomDiscount.value = '5';
+        
+        selectedDataIds.clear();
+        updateSelectedCount();
         
         dropzone1.classList.remove('hidden');
         config1.classList.add('hidden');
