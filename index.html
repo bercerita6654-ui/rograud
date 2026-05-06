@@ -151,7 +151,7 @@
                             <select id="selVar2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
                         </div>
                         <div>
-                            <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom Harga:</label>
+                            <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom Harga (Diskon):</label>
                             <select id="selPrice2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
                         </div>
                     </div>
@@ -205,8 +205,8 @@
             <div class="p-4 border-b border-slate-100 flex flex-col gap-4 bg-slate-50/50">
                 <div class="flex justify-between items-center w-full">
                     <h3 class="font-semibold text-slate-800">Detail Semua Perbandingan</h3>
-                    <button id="btnExportCSV" class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm">
-                        <i class="ph ph-download-simple"></i> Download CSV
+                    <button id="btnExportCSV" class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm" title="Download struktur Data 2 dengan Harga Diskon baru">
+                        <i class="ph ph-download-simple"></i> Download CSV (Format Data 2)
                     </button>
                 </div>
                 
@@ -352,8 +352,10 @@
     // Pengaturan state
     let file1Data = []; 
     let file2Data = [];
+    let file2FullData = []; // Untuk menyimpan data 2 secara lengkap beserta header 3 baris
     let analysisResults = [];
     let customDiscountVal = 5; // Nilai simulasi persentase diskon
+    let colConfig = {}; // Simpan referensi indeks kolom
     
     // Main Table State Management
     let currentMainFilter = 'all'; // 'all', 'found', 'not_found'
@@ -521,6 +523,7 @@
                     config1.classList.remove('hidden');
                 } else {
                     const headerRow = aoa[0]; 
+                    file2FullData = aoa; // Simpan seluruh data untuk diekspor kembali nantinya
                     file2Data = aoa.slice(3); // Data mulai baris ke-4
 
                     document.getElementById('fileName2').textContent = file.name;
@@ -560,24 +563,26 @@
         btnIcon.className = "ph ph-spinner animate-spin text-xl";
 
         setTimeout(async () => {
-            const vProd1 = getVal('selProd1');
-            const vName1 = getVal('selName1');
-            const vVar1 = getVal('selVar1');
-            const vSku1 = getVal('selSku1'); // Kolom 5 Data 1 (SKU Induk)
-            const vSku2 = getVal('selSku2'); // Kolom 6 Data 1 (SKU Variasi)
-            const vPrice1 = getVal('selPrice1');
-
-            const vProd2 = getVal('selProd2');
-            const vName2 = getVal('selName2');
-            const vVar2 = getVal('selVar2');
-            const vPrice2 = getVal('selPrice2');
+            // Simpan konfigurasi kolom ke global agar bisa dipakai oleh fungsi Export CSV
+            colConfig = {
+                vProd1: getVal('selProd1'),
+                vName1: getVal('selName1'),
+                vVar1: getVal('selVar1'),
+                vSku1: getVal('selSku1'),
+                vSku2: getVal('selSku2'),
+                vPrice1: getVal('selPrice1'),
+                vProd2: getVal('selProd2'),
+                vName2: getVal('selName2'),
+                vVar2: getVal('selVar2'),
+                vPrice2: getVal('selPrice2')
+            };
 
             const makeKey = (prod, varCode) => `${String(prod || '').trim().toLowerCase()}|||${String(varCode || '').trim().toLowerCase()}`;
 
             const map2 = new Map();
             file2Data.forEach(row => {
-                const prodVal = vProd2 >= 0 ? row[vProd2] : '';
-                const varVal = vVar2 >= 0 ? row[vVar2] : '';
+                const prodVal = colConfig.vProd2 >= 0 ? row[colConfig.vProd2] : '';
+                const varVal = colConfig.vVar2 >= 0 ? row[colConfig.vVar2] : '';
                 const key = makeKey(prodVal, varVal);
                 if (key !== '|||') map2.set(key, row);
             });
@@ -587,8 +592,8 @@
 
             // TAHAP 1: Bandingkan Data 1 dengan Data 2
             file1Data.forEach(row1 => {
-                const rawProduct = vProd1 >= 0 ? String(row1[vProd1] || '').trim() : '';
-                const rawVariation = vVar1 >= 0 ? String(row1[vVar1] || '').trim() : '';
+                const rawProduct = colConfig.vProd1 >= 0 ? String(row1[colConfig.vProd1] || '').trim() : '';
+                const rawVariation = colConfig.vVar1 >= 0 ? String(row1[colConfig.vVar1] || '').trim() : '';
                 const searchKey = makeKey(rawProduct, rawVariation);
                 
                 if (searchKey === '|||') return;
@@ -596,14 +601,14 @@
                 stats.total++;
                 const row2 = map2.get(searchKey);
                 
-                const price1 = vPrice1 >= 0 ? parsePrice(row1[vPrice1]) : 0;
-                const price2 = (row2 && vPrice2 >= 0) ? parsePrice(row2[vPrice2]) : null;
+                const price1 = colConfig.vPrice1 >= 0 ? parsePrice(row1[colConfig.vPrice1]) : 0;
+                const price2 = (row2 && colConfig.vPrice2 >= 0) ? parsePrice(row2[colConfig.vPrice2]) : null;
                 
-                const rawSku1 = vSku1 >= 0 ? String(row1[vSku1] || '').trim() : '';
-                const rawSku2 = vSku2 >= 0 ? String(row1[vSku2] || '').trim() : '';
+                const rawSku1 = colConfig.vSku1 >= 0 ? String(row1[colConfig.vSku1] || '').trim() : '';
+                const rawSku2 = colConfig.vSku2 >= 0 ? String(row1[colConfig.vSku2] || '').trim() : '';
                 
-                const name1 = vName1 >= 0 ? row1[vName1] : '';
-                const name2 = (row2 && vName2 >= 0) ? row2[vName2] : '';
+                const name1 = colConfig.vName1 >= 0 ? row1[colConfig.vName1] : '';
+                const name2 = (row2 && colConfig.vName2 >= 0) ? row2[colConfig.vName2] : '';
 
                 let diff = null;
                 let diffPct = 0;
@@ -740,33 +745,73 @@
         }, 100); 
     });
 
-    // Ekspor ke CSV dengan pengamanan angka 0 (Formula Text)
+    // Ekspor ke CSV Format Original Data 2 (Shopee Mass Update)
     btnExportCSV.addEventListener('click', () => {
         if (mainFilteredData.length === 0) {
             alert("Tidak ada data untuk di-download berdasarkan filter saat ini.");
             return;
         }
 
-        // Header CSV
-        let csvContent = "SKU,Nama Produk,Harga Awal (Data 1),Harga Pembanding (Data 2),Selisih\n";
+        let csvContent = "";
+        
+        // 1. Tulis 3 baris pertama (Panduan dan Header Asli Data 2)
+        for (let i = 0; i < 3; i++) {
+            if (file2FullData[i]) {
+                const rowStr = file2FullData[i].map(val => {
+                    const str = String(val || '').replace(/"/g, '""');
+                    return `"${str}"`;
+                });
+                csvContent += rowStr.join(",") + "\n";
+            }
+        }
 
+        // 2. Tulis data yang disaring ke struktur aslinya
         mainFilteredData.forEach(item => {
-            const skus = [item.sku1, item.sku2].filter(Boolean).join(' / ');
-            // Format rumus text ="0123" pada excel agar tidak menghapus 0 di depan
-            const safeSku = `="${skus.replace(/"/g, '""')}"`;
-            const safeName = `"${(item.name || '').replace(/"/g, '""')}"`;
-            const harga1 = item.price1;
-            const harga2 = item.price2 !== null ? item.price2 : '';
-            const selisih = item.diff !== null ? item.diff : '';
+            // Cari baris original di file2FullData berdasarkan composite key (Kode Produk + Kode Variasi)
+            const originalRow = file2FullData.find((r, idx) => {
+                if(idx < 3) return false;
+                const prod = String(r[colConfig.vProd2] || '').trim().toLowerCase();
+                const varC = String(r[colConfig.vVar2] || '').trim().toLowerCase();
+                return prod === item.productCode.toLowerCase() && varC === item.variationCode.toLowerCase();
+            });
 
-            csvContent += `${safeSku},${safeName},${harga1},${harga2},${selisih}\n`;
+            if (originalRow) {
+                let newRow = [...originalRow];
+                
+                // Ganti kolom harga dengan harga simulasi diskon
+                if (item.price1 > 0) {
+                    const targetHargaDiskon = Math.round(item.price1 - (item.price1 * (customDiscountVal / 100)));
+                    newRow[colConfig.vPrice2] = targetHargaDiskon;
+                }
+
+                // Proteksi SKU dengan menggunakan text formula agar 0 tidak hilang di MS Excel
+                // Format: ="01345"
+                if (colConfig.vProd2 >= 0 && newRow[colConfig.vProd2]) {
+                    newRow[colConfig.vProd2] = `="${newRow[colConfig.vProd2]}"`;
+                }
+                if (colConfig.vVar2 >= 0 && newRow[colConfig.vVar2]) {
+                    newRow[colConfig.vVar2] = `="${newRow[colConfig.vVar2]}"`;
+                }
+
+                // Tambahkan elemen kosong jika array terpotong (menyesuaikan panjang kolom header)
+                while(newRow.length < file2FullData[0].length) {
+                    newRow.push('');
+                }
+
+                // Konversi baris ke string CSV
+                const csvRowStr = newRow.map(val => {
+                    const str = String(val || '').replace(/"/g, '""');
+                    return `"${str}"`; 
+                });
+                csvContent += csvRowStr.join(",") + "\n";
+            }
         });
 
         const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', 'Hasil_Analisa_Harga_Diskon.csv');
+        link.setAttribute('download', 'Mass_Update_Diskon_Shopee.csv');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
