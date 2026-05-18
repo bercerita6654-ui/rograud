@@ -23,18 +23,18 @@
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
         
-        /* Checkbox styling */
+        /* Checkbox styling disesuaikan dengan warna Shopee */
         .checkbox-custom {
             width: 1.25rem;
             height: 1.25rem;
             border-radius: 0.25rem;
             border: 1px solid #cbd5e1;
             cursor: pointer;
-            accent-color: #2563eb;
+            accent-color: #ee4d2d;
         }
     </style>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-800 font-sans p-4 md:p-8">
+<body class="min-h-screen bg-gray-50 text-slate-800 font-sans p-4 md:p-8">
 
 <div class="max-w-7xl mx-auto space-y-6">
     
@@ -42,7 +42,7 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <div>
             <h1 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                <i class="ph ph-trend-down text-blue-600 text-3xl"></i>
+                <i class="ph ph-trend-down text-[#ee4d2d] text-3xl"></i>
                 Analisa Harga Diskon Marketplace
             </h1>
             <p class="text-slate-500 mt-1">Bandingkan dua data Excel (.xlsx / .csv) untuk menemukan selisih harga dan persentase diskon.</p>
@@ -57,9 +57,9 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             <!-- File 1 Upload -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-[#ee4d2d]/30 transition-colors">
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <div class="p-2 bg-[#ffedea] text-[#ee4d2d] rounded-lg">
                         <i class="ph ph-file-xls text-2xl"></i>
                     </div>
                     <div>
@@ -68,10 +68,10 @@
                     </div>
                 </div>
 
-                <label id="dropzone1" class="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                <label id="dropzone1" class="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-[#ffedea]/50 hover:border-[#ee4d2d]/50 transition-colors">
                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
                         <i class="ph ph-cloud-arrow-up text-4xl text-slate-400 mb-3"></i>
-                        <p class="text-sm text-slate-600"><span class="font-semibold">Klik untuk unggah</span> data 1</p>
+                        <p class="text-sm text-slate-600"><span class="font-semibold text-[#ee4d2d]">Klik untuk unggah</span> data 1</p>
                         <p class="text-xs text-slate-400 mt-1">.XLSX, .XLS, atau .CSV</p>
                     </div>
                     <input type="file" id="inputFile1" class="hidden" accept=".xlsx, .xls, .csv" />
@@ -89,39 +89,39 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom Kode Produk:</label>
-                                <select id="selProd1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
+                                <select id="selProd1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d]"></select>
                             </div>
                             <div>
                                 <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom Kode Variasi:</label>
-                                <select id="selVar1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
+                                <select id="selVar1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d]"></select>
                             </div>
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom Nama Produk:</label>
-                            <select id="selName1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
+                            <select id="selName1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d]"></select>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom SKU 1 (Induk):</label>
-                                <select id="selSku1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
+                                <select id="selSku1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d]"></select>
                             </div>
                             <div>
                                 <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom SKU 2 (Variasi):</label>
-                                <select id="selSku2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
+                                <select id="selSku2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d]"></select>
                             </div>
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom Harga:</label>
-                            <select id="selPrice1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
+                            <select id="selPrice1" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d]"></select>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- File 2 Upload -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-[#ee4d2d]/30 transition-colors">
                 <div class="flex items-center gap-3 mb-4">
-                    <div class="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                    <div class="p-2 bg-teal-50 text-teal-600 rounded-lg">
                         <i class="ph ph-file-xls text-2xl"></i>
                     </div>
                     <div>
@@ -130,10 +130,10 @@
                     </div>
                 </div>
 
-                <label id="dropzone2" class="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                <label id="dropzone2" class="flex flex-col items-center justify-center w-full h-40 border-2 border-slate-200 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-teal-50/50 hover:border-teal-500/50 transition-colors">
                     <div class="flex flex-col items-center justify-center pt-5 pb-6">
                         <i class="ph ph-cloud-arrow-up text-4xl text-slate-400 mb-3"></i>
-                        <p class="text-sm text-slate-600"><span class="font-semibold">Klik untuk unggah</span> data 2</p>
+                        <p class="text-sm text-slate-600"><span class="font-semibold text-teal-600">Klik untuk unggah</span> data 2</p>
                         <p class="text-xs text-slate-400 mt-1">.XLSX, .XLS, atau .CSV</p>
                     </div>
                     <input type="file" id="inputFile2" class="hidden" accept=".xlsx, .xls, .csv" />
@@ -150,19 +150,19 @@
                     <div class="space-y-3">
                         <div>
                             <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom Kode Produk:</label>
-                            <select id="selProd2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
+                            <select id="selProd2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d]"></select>
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom Nama Produk:</label>
-                            <select id="selName2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
+                            <select id="selName2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d]"></select>
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom Kode Variasi:</label>
-                            <select id="selVar2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
+                            <select id="selVar2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d]"></select>
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-slate-600 mb-1 block">Kolom Harga (Diskon):</label>
-                            <select id="selPrice2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white"></select>
+                            <select id="selPrice2" class="w-full text-sm p-2 border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d]"></select>
                         </div>
                     </div>
                 </div>
@@ -171,10 +171,10 @@
 
         <!-- Action Button -->
         <div id="actionContainer" class="hidden flex flex-col items-center mt-6 gap-3">
-            <div id="missingFileWarning" class="text-sm font-medium text-orange-600 bg-orange-50 px-4 py-2 rounded-lg border border-orange-200 shadow-sm">
+            <div id="missingFileWarning" class="text-sm font-medium text-amber-600 bg-amber-50 px-4 py-2 rounded-lg border border-amber-200 shadow-sm">
                 <!-- Peringatan akan diisi via JS -->
             </div>
-            <button id="btnAnalyze" disabled class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+            <button id="btnAnalyze" disabled class="bg-[#ee4d2d] hover:bg-[#d73211] text-white font-semibold py-3 px-8 rounded-xl shadow-lg hover:shadow-[#ee4d2d]/30 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                 <span id="btnText">Mulai Bandingkan Harga</span>
                 <i class="ph ph-arrow-right text-xl" id="btnIcon"></i>
             </button>
@@ -204,12 +204,12 @@
                 <p class="text-red-600 text-xs font-medium uppercase tracking-wider mb-1">Lebih Mahal</p>
                 <p id="statExpensive" class="text-2xl font-bold text-red-700">0</p>
             </div>
-            <div onclick="openModal('not_found')" class="bg-orange-50 p-4 rounded-xl shadow-sm border border-orange-200 cursor-pointer hover:bg-orange-100 transition-colors group relative">
+            <div onclick="openModal('not_found')" class="bg-amber-50 p-4 rounded-xl shadow-sm border border-amber-200 cursor-pointer hover:bg-amber-100 transition-colors group relative">
                 <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <i class="ph ph-arrow-square-out text-orange-600"></i>
+                    <i class="ph ph-arrow-square-out text-amber-600"></i>
                 </div>
-                <p class="text-orange-600 text-xs font-medium uppercase tracking-wider mb-1">Tidak Ditemukan</p>
-                <p id="statNotFound" class="text-2xl font-bold text-orange-700">0</p>
+                <p class="text-amber-600 text-xs font-medium uppercase tracking-wider mb-1">Tidak Ditemukan</p>
+                <p id="statNotFound" class="text-2xl font-bold text-amber-700">0</p>
             </div>
         </div>
 
@@ -221,7 +221,7 @@
                         Detail Semua Perbandingan 
                         <span id="mainDataCount" class="text-sm font-normal text-slate-500 ml-2">(0 data)</span>
                     </h3>
-                    <button id="btnExportExcel" class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm" title="Download data yang dicentang sesuai format Data 2">
+                    <button id="btnExportExcel" class="px-3 py-1.5 bg-[#ee4d2d] text-white text-sm font-medium rounded-lg hover:bg-[#d73211] transition-colors flex items-center gap-2 shadow-sm" title="Download data yang dicentang sesuai format Data 2">
                         <i class="ph ph-file-xls"></i> Download Excel Terpilih (<span id="selectedCount">0</span>)
                     </button>
                 </div>
@@ -230,13 +230,13 @@
                     <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
                         <!-- Status Filter Buttons -->
                         <div class="flex bg-slate-200/50 p-1 rounded-lg w-full sm:w-auto">
-                            <button id="btnFilterAll" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md bg-white text-blue-600 shadow-sm transition-all">Semua</button>
+                            <button id="btnFilterAll" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md bg-white text-[#ee4d2d] shadow-sm transition-all">Semua</button>
                             <button id="btnFilterFound" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">Ada di Data 2</button>
                             <button id="btnFilterNotFound" class="flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all">Tidak Ada</button>
                         </div>
                         
                         <!-- Margin Filter Dropdown -->
-                        <select id="selMarginFilter" class="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer text-slate-700 font-medium">
+                        <select id="selMarginFilter" class="w-full sm:w-auto px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d] cursor-pointer text-slate-700 font-medium">
                             <option value="all">Semua Margin</option>
                             <option value="20">Target >= 20% (Kolom AB)</option>
                             <option value="15">Target >= 15% (Kolom X)</option>
@@ -247,7 +247,7 @@
                     <!-- Search -->
                     <div class="relative w-full sm:w-auto">
                         <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="searchInput" placeholder="Cari SKU atau Nama..." class="w-full sm:w-64 pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                        <input type="text" id="searchInput" placeholder="Cari SKU atau Nama..." class="w-full sm:w-64 pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ee4d2d] bg-white" />
                     </div>
                 </div>
             </div>
@@ -268,7 +268,7 @@
                                 <div class="mt-1 flex flex-col gap-1 text-[10px] text-slate-500 font-normal">
                                     <span>Simulasi Diskon:</span>
                                     <div class="flex items-center gap-1">
-                                        <input type="number" id="mainCustomDiscount" value="5" class="w-10 px-1 py-0.5 border border-slate-300 bg-white rounded text-center text-slate-800 focus:outline-blue-500" /> %
+                                        <input type="number" id="mainCustomDiscount" value="5" class="w-10 px-1 py-0.5 border border-slate-300 bg-white rounded text-center text-slate-800 focus:outline-[#ee4d2d]" /> %
                                     </div>
                                 </div>
                             </th>
@@ -307,7 +307,7 @@
         <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="relative w-full md:w-80">
                 <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="modalSearchInput" placeholder="Cari di kategori ini..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" />
+                <input type="text" id="modalSearchInput" placeholder="Cari di kategori ini..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ee4d2d] bg-white" />
             </div>
             
             <!-- Pagination Controls -->
@@ -338,7 +338,7 @@
                             <div class="mt-1 flex flex-col gap-1 text-[10px] text-slate-500 font-normal">
                                 <span>Simulasi Diskon:</span>
                                 <div class="flex items-center gap-1">
-                                    <input type="number" id="modalCustomDiscount" value="5" class="w-10 px-1 py-0.5 border border-slate-300 bg-white rounded text-center text-slate-800 focus:outline-blue-500" /> %
+                                    <input type="number" id="modalCustomDiscount" value="5" class="w-10 px-1 py-0.5 border border-slate-300 bg-white rounded text-center text-slate-800 focus:outline-[#ee4d2d]" /> %
                                 </div>
                             </div>
                         </th>
@@ -768,13 +768,12 @@
                 console.error("Gagal mengambil data HPP dari CSV:", err);
             }
 
-            // TAHAP 3: Cocokkan & Kalkulasi Margin berdasarkan Harga Target (Kolom T, X, AB)
+            // TAHAP 3: Cocokkan & Kalkulasi Margin
             analysisResults.forEach(item => {
                 const sku5_1 = extract5DigitSKU(item.sku1);
                 const sku5_2 = extract5DigitSKU(item.sku2);
 
                 let sheetData = null;
-                // Prioritas cek sku variasi (kolom 6), kemudian sku induk (kolom 5)
                 if (sku5_2 && hppMap.has(sku5_2)) {
                     sheetData = hppMap.get(sku5_2);
                 } else if (sku5_1 && hppMap.has(sku5_1)) {
@@ -793,7 +792,6 @@
                     item.target20 = 0;
                 }
 
-                // Kalkulasi Profit Real
                 if (item.price2 !== null && item.hppModal > 0) {
                     item.potongan = (item.price2 * 0.25) + 2600;
                     item.profit = item.price2 - item.potongan - item.hppModal;
@@ -897,7 +895,7 @@
     const generateRowHTML = (item) => {
         let statusBadge = '';
         if (item.status === 'not_found') {
-            statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-orange-50 text-orange-700"><i class="ph ph-warning-circle"></i> Tidak Ada di Data 2</span>`;
+            statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-700"><i class="ph ph-warning-circle"></i> Tidak Ada di Data 2</span>`;
         } else if (item.status === 'same') {
             statusBadge = `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-600"><i class="ph ph-minus"></i> Harga Sama</span>`;
         } else if (item.status === 'cheaper') {
@@ -924,7 +922,7 @@
             simulasiDiskonHtml = `
                 <div class="text-[10px] text-slate-500 mt-1.5 border-t border-slate-100 pt-1.5">
                     Jika Diskon <span class="font-bold text-slate-700">${customDiscountVal}%</span>:<br/>
-                    <span class="font-bold text-blue-600">${formatCurrency(targetHargaDiskon)}</span>
+                    <span class="font-bold text-[#ee4d2d]">${formatCurrency(targetHargaDiskon)}</span>
                 </div>
             `;
         }
@@ -989,7 +987,10 @@
             `;
         }
 
-        const skus = [item.sku1, item.sku2].filter(Boolean).join(' / ');
+        const sku5_1 = extract5DigitSKU(item.sku1);
+        const sku5_2 = extract5DigitSKU(item.sku2);
+        const skusArr = [sku5_1, sku5_2].filter(Boolean);
+        const skus = [...new Set(skusArr)].join(' / ');
         const isChecked = selectedDataIds.has(item.id) ? 'checked' : '';
 
         return `
@@ -999,7 +1000,7 @@
                 </td>
                 <td class="py-3 px-3 align-top whitespace-normal min-w-[200px]">
                     <div class="font-medium text-slate-800">${item.productCode}</div>
-                    ${item.variationCode ? `<div class="text-xs font-semibold text-blue-600">${item.variationCode}</div>` : ''}
+                    ${item.variationCode ? `<div class="text-xs font-semibold text-[#ee4d2d]">${item.variationCode}</div>` : ''}
                     ${skus ? `<div class="text-xs text-slate-500 mt-1">SKU: ${skus}</div>` : ''}
                     <div class="text-xs text-slate-500 mt-1 line-clamp-2" title="${item.name}">${item.name}</div>
                 </td>
@@ -1075,7 +1076,7 @@
         [btnFilterAll, btnFilterFound, btnFilterNotFound].forEach(btn => {
             btn.className = "flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition-all";
         });
-        activeBtn.className = "flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md bg-white text-blue-600 shadow-sm transition-all";
+        activeBtn.className = "flex-1 sm:flex-none px-3 py-1.5 text-sm font-medium rounded-md bg-white text-[#ee4d2d] shadow-sm transition-all";
     };
 
     btnFilterAll.addEventListener('click', () => {
@@ -1113,7 +1114,7 @@
         
         if (category === 'cheaper') { title = "Daftar Lebih Murah (Diskon)"; colorClass = "bg-green-50"; }
         else if (category === 'expensive') { title = "Daftar Lebih Mahal"; colorClass = "bg-red-50"; }
-        else if (category === 'not_found') { title = "Daftar Tidak Ditemukan"; colorClass = "bg-orange-50"; }
+        else if (category === 'not_found') { title = "Daftar Tidak Ditemukan"; colorClass = "bg-amber-50"; }
 
         const modalHeader = document.getElementById('modalHeader');
         modalHeader.className = `p-5 border-b border-slate-100 flex justify-between items-center ${colorClass}`;
