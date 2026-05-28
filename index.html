@@ -277,7 +277,7 @@
                     <thead class="bg-slate-50 text-slate-600 font-semibold sticky top-0 shadow-sm z-10 outline outline-1 outline-slate-100">
                         <tr>
                             <th class="py-3 px-3 bg-slate-50 align-top w-12 text-center">
-                                <input type="checkbox" id="selectAllCheckbox" class="checkbox-custom" title="Pilih Semua Data" />
+                                <input type="checkbox" id="selectAllCheckbox" class="checkbox-custom select-all-checkbox" title="Pilih Semua Data" />
                             </th>
                             <th class="py-3 px-3 bg-slate-50 align-top whitespace-normal min-w-[200px] leading-tight">Produk, Variasi<br/>& SKU</th>
                             <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Harga Awal<br/><span class="font-normal text-[10px]">(Data 1)</span></th>
@@ -309,7 +309,7 @@
                     <thead class="bg-purple-50 text-slate-600 font-semibold sticky top-0 shadow-sm z-10 outline outline-1 outline-purple-100">
                         <tr>
                             <th class="py-3 px-3 bg-purple-50 align-top w-12 text-center">
-                                <i class="ph ph-check-square text-purple-400"></i>
+                                <input type="checkbox" id="selectAllCheckboxAIO" class="checkbox-custom select-all-checkbox" title="Pilih Semua Data AIO" />
                             </th>
                             <th class="py-3 px-3 bg-purple-50 align-top whitespace-normal min-w-[150px] leading-tight text-purple-900">SKU & Nama<br/><span class="font-normal text-[10px]">(Data 3 AIO)</span></th>
                             <th class="py-3 px-3 bg-purple-50 align-top w-24 whitespace-normal leading-tight text-purple-900">Kategori, Merk<br/>& Unit <span class="font-normal text-[10px]">(Data 3)</span></th>
@@ -333,7 +333,7 @@
 <!-- Modal Pop-up -->
 <div id="dataModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity">
     <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <!-- Modal Content (Sama seperti sebelumnya) -->
+        <!-- Modal Content -->
         <div id="modalHeader" class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
             <div>
                 <h3 id="modalTitle" class="text-xl font-bold text-slate-800">Daftar Item</h3>
@@ -423,7 +423,6 @@
     const btnExportAIO = document.getElementById('btnExportAIO');
     const mainCustomDiscount = document.getElementById('mainCustomDiscount');
     const missingFileWarning = document.getElementById('missingFileWarning');
-    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
     const selectedCountLabel = document.getElementById('selectedCount');
     const mainDataCountLabel = document.getElementById('mainDataCount');
 
@@ -440,27 +439,42 @@
         if(selectedCountLabel) selectedCountLabel.textContent = selectedDataIds.size;
     };
 
-    selectAllCheckbox.addEventListener('change', (e) => {
-        const isChecked = e.target.checked;
-        const currentCheckboxes = document.querySelectorAll('.row-checkbox');
-        currentCheckboxes.forEach(cb => {
-            cb.checked = isChecked;
-            if (isChecked) selectedDataIds.add(cb.dataset.id);
-            else selectedDataIds.delete(cb.dataset.id);
+    // --- Cek All Checkbox Logic untuk kedua tab ---
+    const setupSelectAllCheckboxes = () => {
+        const selectAllCheckboxes = document.querySelectorAll('.select-all-checkbox');
+        selectAllCheckboxes.forEach(chk => {
+            // Hapus event listener lama dengan menukar node (mencegah double trigger jika dijalankan ulang)
+            const newChk = chk.cloneNode(true);
+            chk.parentNode.replaceChild(newChk, chk);
+            
+            newChk.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                // Sinkronisasikan semua master checkbox
+                document.querySelectorAll('.select-all-checkbox').forEach(c => { c.checked = isChecked; });
+                
+                const currentCheckboxes = document.querySelectorAll('.row-checkbox');
+                currentCheckboxes.forEach(cb => {
+                    cb.checked = isChecked;
+                    if (isChecked) selectedDataIds.add(cb.dataset.id);
+                    else selectedDataIds.delete(cb.dataset.id);
+                });
+                updateSelectedCount();
+                renderActiveTable(); 
+            });
         });
-        updateSelectedCount();
-        renderActiveTable(); 
-    });
+    };
 
     const updateCheckAllState = () => {
         const currentCheckboxes = document.querySelectorAll('.row-checkbox');
+        const selectAllCheckboxes = document.querySelectorAll('.select-all-checkbox');
+        
         if(currentCheckboxes.length === 0) {
-            selectAllCheckbox.checked = false;
+            selectAllCheckboxes.forEach(c => c.checked = false);
             return;
         }
         let allChecked = true;
         currentCheckboxes.forEach(cb => { if(!cb.checked) allChecked = false; });
-        selectAllCheckbox.checked = allChecked;
+        selectAllCheckboxes.forEach(c => c.checked = allChecked);
     };
 
     window.toggleRowSelection = (checkboxElem, rowId) => {
@@ -678,6 +692,10 @@
                 const name1 = colConfig.vName1 >= 0 ? row1[colConfig.vName1] : '';
                 const name2 = (row2 && colConfig.vName2 >= 0) ? row2[colConfig.vName2] : '';
 
+                // Capture data 2 keys for shopee specific matching mapping
+                const d2ProdKey = row2 && colConfig.vProd2 >= 0 ? row2[colConfig.vProd2] : '';
+                const d2VarKey = row2 && colConfig.vVar2 >= 0 ? row2[colConfig.vVar2] : '';
+
                 let diff = null; let diffPct = 0; let status = 'not_found'; 
                 if (price2 !== null) {
                     diff = price2 - price1;
@@ -697,6 +715,8 @@
                     id: searchKey, 
                     productCode: rawProduct,
                     variationCode: rawVariation,
+                    d2ProdKey: d2ProdKey, // Menyimpan kode produk shopee
+                    d2VarKey: d2VarKey,   // Menyimpan kode variasi shopee
                     sku1: rawSku1,
                     sku2: rawSku2,
                     name: name1 || name2 || `${rawProduct} ${rawVariation}`,
@@ -806,6 +826,8 @@
                 }
             });
 
+            // Pasang event listener untuk select-all-checkbox
+            setupSelectAllCheckboxes();
             filterMainTable(); 
 
             btnAnalyze.disabled = false;
@@ -906,7 +928,8 @@
         }
 
         let exportDataAOA = [];
-        exportDataAOA.push(["SKU", "Nama Produk", "Merk", "Stok (qty)", "HPP", "Harga (Data 1)", "Harga (Data 2)", "Selisih Nominal (D2 vs D1)", "Persentase Selisih"]);
+        // Tambahkan Kode Produk (Shopee) dan Kode Variasi (Shopee) dari Data 2
+        exportDataAOA.push(["SKU", "Nama Produk", "Merk", "Stok (qty)", "HPP", "Harga Shopee (Data 1)", "Harga Campaign (Data 2)", "Selisih Nominal (D2 vs D1)", "Persentase Selisih", "Kode Produk (Data 2 Shopee)", "Kode Variasi (Data 2 Shopee)"]);
 
         const selectedItemsToExport = analysisResults.filter(item => selectedDataIds.has(item.id));
         selectedItemsToExport.forEach(item => {
@@ -929,7 +952,9 @@
                 item.price1,
                 finalHarga,
                 diffValue,
-                `${diffPctValue.toFixed(2)}%`
+                `${diffPctValue.toFixed(2)}%`,
+                { t: 's', v: String(item.d2ProdKey || '') }, // Kode Produk Shopee (Data 2)
+                { t: 's', v: String(item.d2VarKey || '') }   // Kode Variasi Shopee (Data 2)
             ]);
         });
 
