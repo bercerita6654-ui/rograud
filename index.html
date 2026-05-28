@@ -283,15 +283,6 @@
                             <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Harga Awal<br/><span class="font-normal text-[10px]">(Data 1)</span></th>
                             <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Min Diskon<br/>yang diinginkan</th>
                             <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Harga Pembanding<br/><span class="font-normal text-[10px]">(Data 2)</span></th>
-                            <th class="py-3 px-3 bg-slate-50 align-top w-32 whitespace-normal leading-tight">
-                                Selisih
-                                <div class="mt-1 flex flex-col gap-1 text-[10px] text-slate-500 font-normal">
-                                    <span>Simulasi Diskon:</span>
-                                    <div class="flex items-center gap-1">
-                                        <input type="number" id="mainCustomDiscount" value="5" class="w-10 px-1 py-0.5 border border-slate-300 bg-white rounded text-center text-slate-800 focus:outline-[#ee4d2d]" /> %
-                                    </div>
-                                </div>
-                            </th>
                             <th class="py-3 px-3 bg-slate-50 align-top w-24 whitespace-normal leading-tight">HPP<br/><span class="font-normal text-[10px]">(Modal)</span></th>
                             <th class="py-3 px-3 bg-slate-50 align-top w-32 whitespace-normal leading-tight">
                                 Est. Profit<br/>& Margin
@@ -315,7 +306,15 @@
                             <th class="py-3 px-3 bg-purple-50 align-top w-24 whitespace-normal leading-tight text-purple-900">Kategori, Merk<br/>& Unit <span class="font-normal text-[10px]">(Data 3)</span></th>
                             <th class="py-3 px-3 bg-purple-50 align-top w-20 whitespace-normal leading-tight text-purple-900">Stok Qty<br/><span class="font-normal text-[10px]">(Data 3)</span></th>
                             <th class="py-3 px-3 bg-purple-50 align-top w-28 whitespace-normal leading-tight">Harga Shopee<br/><span class="font-normal text-[10px]">(Data 1)</span></th>
-                            <th class="py-3 px-3 bg-purple-50 align-top w-28 whitespace-normal leading-tight">Harga Campaign<br/><span class="font-normal text-[10px]">(Data 2)</span></th>
+                            <th class="py-3 px-3 bg-purple-50 align-top w-28 whitespace-normal leading-tight">
+                                Harga Campaign<br/><span class="font-normal text-[10px]">(Data 2)</span>
+                                <div class="mt-1 flex flex-col gap-1 text-[9px] text-slate-500 font-normal">
+                                    <span>Jika Kosong, Sim. Diskon:</span>
+                                    <div class="flex items-center gap-1">
+                                        <input type="number" id="mainCustomDiscount" value="5" class="w-10 px-1 py-0.5 border border-purple-200 bg-white rounded text-center text-slate-800 focus:outline-[#ee4d2d]" /> %
+                                    </div>
+                                </div>
+                            </th>
                             <th class="py-3 px-3 bg-purple-50 align-top w-24 whitespace-normal leading-tight">Selisih Harga<br/><span class="font-normal text-[10px]">(Nominal & %)</span></th>
                             <th class="py-3 px-3 bg-purple-50 align-top w-24 whitespace-normal leading-tight text-purple-900">HPP<br/><span class="font-normal text-[10px]">(Data 3)</span></th>
                             <th class="py-3 px-3 bg-purple-50 align-top w-28 whitespace-normal leading-tight">Est. Profit<br/><span class="font-normal text-[10px]">(Berdasarkan HPP)</span></th>
@@ -357,7 +356,6 @@
                         <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Harga Awal<br/><span class="font-normal text-[10px]">(Data 1)</span></th>
                         <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Min Diskon<br/>yang diinginkan</th>
                         <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Harga Pembanding<br/><span class="font-normal text-[10px]">(Data 2)</span></th>
-                        <th class="py-3 px-3 bg-slate-50 align-top w-32 whitespace-normal leading-tight">Selisih</th>
                         <th class="py-3 px-3 bg-slate-50 align-top w-24 whitespace-normal leading-tight">HPP<br/><span class="font-normal text-[10px]">(Modal)</span></th>
                         <th class="py-3 px-3 bg-slate-50 align-top w-32 whitespace-normal leading-tight">Est. Profit & Margin</th>
                     </tr>
@@ -443,13 +441,12 @@
     const setupSelectAllCheckboxes = () => {
         const selectAllCheckboxes = document.querySelectorAll('.select-all-checkbox');
         selectAllCheckboxes.forEach(chk => {
-            // Hapus event listener lama dengan menukar node (mencegah double trigger jika dijalankan ulang)
+            // Hapus event listener lama dengan menukar node
             const newChk = chk.cloneNode(true);
             chk.parentNode.replaceChild(newChk, chk);
             
             newChk.addEventListener('change', (e) => {
                 const isChecked = e.target.checked;
-                // Sinkronisasikan semua master checkbox
                 document.querySelectorAll('.select-all-checkbox').forEach(c => { c.checked = isChecked; });
                 
                 const currentCheckboxes = document.querySelectorAll('.row-checkbox');
@@ -577,7 +574,6 @@
                     file2SheetName = firstSheetName; 
                     const headerRow = aoa[0]; 
                     file2FullData = aoa; 
-                    // Menjaga 3 Baris Header Shopee Mutlak Sesuai File Original Anda
                     file2Data = aoa.slice(3); 
                     document.getElementById('fileName2').textContent = file.name;
                     document.getElementById('rowCount2').textContent = `${file2Data.length} baris`;
@@ -588,7 +584,6 @@
                     dropzone2.classList.add('hidden');
                     config2.classList.remove('hidden');
                 } else if (fileIndex === 3) {
-                    // Data 3 (AIO)
                     file3Data = aoa.slice(1); 
                     document.getElementById('fileName3').textContent = file.name;
                     dropzone3.classList.add('hidden');
@@ -637,7 +632,6 @@
                 vProd2: getVal('selProd2'), vName2: getVal('selName2'), vVar2: getVal('selVar2'), vPrice2: getVal('selPrice2')
             };
 
-            // Map Data 2
             const map2 = new Map();
             file2Data.forEach(row => {
                 const prodVal = colConfig.vProd2 >= 0 ? row[colConfig.vProd2] : '';
@@ -646,21 +640,20 @@
                 if (key !== '|||') map2.set(key, row);
             });
 
-            // Map Data 3 (AIO) 
             data3Map.clear();
             if (file3Data.length > 0) {
                 file3Data.forEach(row => {
-                    const rawSku = String(row[0] || ''); // Kolom 1 (SKU)
+                    const rawSku = String(row[0] || ''); // Kolom 1
                     const sku5 = extract5DigitSKU(rawSku);
                     if (sku5) {
                         data3Map.set(sku5, {
                             sku: rawSku,
-                            nama: row[2] || '',      // Kolom 3
-                            unit: row[3] || '',      // Kolom 4
-                            kategori: row[4] || '',  // Kolom 5
-                            merk: row[6] || '',      // Kolom 7
-                            hpp: parsePrice(row[7]), // Kolom 8
-                            qty: row[12] || 0        // Kolom 13
+                            nama: row[2] || '',      
+                            unit: row[3] || '',      
+                            kategori: row[4] || '',  
+                            merk: row[6] || '',      
+                            hpp: parsePrice(row[7]), 
+                            qty: row[12] || 0        
                         });
                     }
                 });
@@ -692,13 +685,12 @@
                 const name1 = colConfig.vName1 >= 0 ? row1[colConfig.vName1] : '';
                 const name2 = (row2 && colConfig.vName2 >= 0) ? row2[colConfig.vName2] : '';
 
-                // Capture data 2 keys for shopee specific matching mapping
                 const d2ProdKey = row2 && colConfig.vProd2 >= 0 ? row2[colConfig.vProd2] : '';
                 const d2VarKey = row2 && colConfig.vVar2 >= 0 ? row2[colConfig.vVar2] : '';
 
-                let diff = null; let diffPct = 0; let status = 'not_found'; 
+                let diffPct = 0; let status = 'not_found'; 
                 if (price2 !== null) {
-                    diff = price2 - price1;
+                    const diff = price2 - price1;
                     diffPct = price1 > 0 ? (diff / price1) * 100 : 0;
                     if (diff < 0) { status = 'cheaper'; stats.cheaper++; }
                     else if (diff > 0) { status = 'expensive'; stats.expensive++; }
@@ -726,7 +718,7 @@
                     hppModal: null, 
                     target10: 0, target15: 0, target20: 0,
                     profit: null, marginPctActual: null, potongan: null,
-                    diff, diffPct, status
+                    diffPct, status // We don't store diff literal for Shopee View anymore
                 });
             });
 
@@ -739,7 +731,6 @@
             resultsSection.classList.remove('hidden');
             btnReset.classList.remove('hidden');
 
-            // Setup Filter Dropdowns for AIO
             const uniqueMerks = new Set();
             const uniqueKategoris = new Set();
             analysisResults.forEach(item => {
@@ -813,12 +804,9 @@
                     item.target15 = gData.t15;
                     item.target20 = gData.t20;
                 } else {
-                    item.hppModal = item.price1; // Fallback ekstrim
+                    item.hppModal = item.price1; 
                 }
 
-                // Kalkulasi Profit berdasarkan ketentuan BIAYA BARU
-                // Biaya = 26% dari Harga Jual (11% admin + 12.5% xtra + 0.5% asuransi + 2% ams) 
-                // Biaya tetap = Rp2600 (1250 mp + 350 jb + 1000 pack)
                 if (item.price2 !== null && item.hppModal > 0) {
                     item.potongan = (item.price2 * 0.26) + 2600;
                     item.profit = item.price2 - item.potongan - item.hppModal;
@@ -826,7 +814,6 @@
                 }
             });
 
-            // Pasang event listener untuk select-all-checkbox
             setupSelectAllCheckboxes();
             filterMainTable(); 
 
@@ -866,7 +853,7 @@
         renderActiveTable();
     });
 
-    // Ekspor Excel - Format Shopee (MENGGUNAKAN 3 BARIS HEADER ASLI)
+    // Ekspor Excel - Format Shopee Asli (Tanpa override harga baru)
     btnExportExcel.addEventListener('click', () => {
         if (selectedDataIds.size === 0) {
             alert("Centang data pada tabel terlebih dahulu.");
@@ -874,7 +861,6 @@
         }
 
         let exportDataAOA = [];
-        // Menggunakan 3 Baris Header Secara Utuh Agar Tidak Ditolak Shopee
         for (let i = 0; i < 3; i++) {
             if (file2FullData[i]) exportDataAOA.push([...file2FullData[i]]);
         }
@@ -891,13 +877,8 @@
                 let newRow = [...originalRow];
                 while(newRow.length < file2FullData[0].length) newRow.push('');
 
-                if (item.price1 > 0) {
-                    const targetHargaDiskon = Math.round(item.price1 - (item.price1 * (customDiscountVal / 100)));
-                    
-                    // Format Shopee: Memaksa index 10 dan 11 sama persis dengan angka baru
-                    if(newRow[10] !== undefined) newRow[10] = targetHargaDiskon; 
-                    if(newRow[11] !== undefined) newRow[11] = targetHargaDiskon; 
-                }
+                // MEMPERTAHANKAN HARGA DARI DATA 2. 
+                // Tidak lagi menimpa newRow[10] dan newRow[11]
 
                 // Force tipe data String agar angka 0 (nol) di depan tidak dikonversi jadi number oleh Excel
                 if (colConfig.vProd2 >= 0 && newRow[colConfig.vProd2] !== undefined && newRow[colConfig.vProd2] !== '') {
@@ -943,7 +924,7 @@
 
         const selectedItemsToExport = analysisResults.filter(item => 
             selectedDataIds.has(item.id) && 
-            item.d2ProdKey && item.d2ProdKey !== '' // Memastikan tidak ikut terunduh jika tidak punya kode produk dari data 2
+            item.d2ProdKey && item.d2ProdKey !== '' 
         );
 
         if (selectedItemsToExport.length === 0) {
@@ -987,25 +968,13 @@
 
     // --- HTML RENDERERS ---
 
+    // View Murni Tampilan Shopee
     const generateRowHTMLShopee = (item) => {
         let statusBadge = '';
         if (item.status === 'not_found') statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700"><i class="ph ph-warning-circle"></i> Tdk Ditemukan</span>`;
         else if (item.status === 'same') statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600"><i class="ph ph-minus"></i> Sama</span>`;
         else if (item.status === 'cheaper') statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700"><i class="ph ph-trend-down"></i> Diskon ${Math.abs(item.diffPct).toFixed(1)}%</span>`;
         else if (item.status === 'expensive') statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-red-50 text-red-700"><i class="ph ph-trend-up"></i> Naik ${Math.abs(item.diffPct).toFixed(1)}%</span>`;
-
-        let diffHtml = '-';
-        if (item.diff !== null) {
-            const colorClass = item.status === 'cheaper' ? 'text-green-600' : (item.status === 'expensive' ? 'text-red-600' : 'text-slate-400');
-            const sign = item.diff > 0 ? '+' : '';
-            diffHtml = `<div class="${colorClass}"><div>${sign}${formatCurrency(item.diff)}</div>${item.diffPct !== 0 ? `<div class="text-[10px] font-bold opacity-90 mt-0.5">(${sign}${item.diffPct.toFixed(1)}%)</div>` : ''}</div>`;
-        }
-
-        let simulasiDiskonHtml = '';
-        if (item.price1 > 0) {
-            const targetHargaDiskon = item.price1 - (item.price1 * (customDiscountVal / 100));
-            simulasiDiskonHtml = `<div class="text-[9px] text-slate-500 mt-1 border-t border-slate-100 pt-1">Sim. Diskon <span class="font-bold">${customDiscountVal}%</span>:<br/><span class="font-bold text-[#ee4d2d]">${formatCurrency(targetHargaDiskon)}</span></div>`;
-        }
 
         let hppHtml = item.hppModal === null ? `<i class="ph ph-spinner animate-spin text-slate-400"></i>` : `<span class="font-medium text-slate-700">${formatCurrency(item.hppModal)}</span>`;
 
@@ -1059,7 +1028,6 @@
                 <td class="py-2 px-3 text-slate-600 align-top w-24">${formatCurrency(item.price1)}</td>
                 <td class="py-2 px-3 align-top w-24">${statusBadge}</td>
                 <td class="py-2 px-3 text-slate-600 align-top w-24">${item.price2 !== null ? formatCurrency(item.price2) : '-'}</td>
-                <td class="py-2 px-3 font-medium align-top w-24">${diffHtml}${simulasiDiskonHtml}</td>
                 <td class="py-2 px-3 align-top w-20">${hppHtml}</td>
                 <td class="py-2 px-3 align-top w-32">${marginHtml}</td>
             </tr>
@@ -1132,7 +1100,8 @@
     const renderActiveTable = () => {
         const tBody = currentActiveTab === 'shopee' ? tableBody : tableBodyAIO;
         if (mainFilteredData.length === 0) {
-            tBody.innerHTML = `<tr><td colSpan="9" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
+            const cols = currentActiveTab === 'shopee' ? 7 : 9;
+            tBody.innerHTML = `<tr><td colSpan="${cols}" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
             updateCheckAllState();
             return;
         }
@@ -1206,6 +1175,54 @@
     selMerkFilter.addEventListener('change', (e) => { filterMainTable(); });
     selKategoriFilter.addEventListener('change', (e) => { filterMainTable(); });
     searchInput.addEventListener('input', () => { filterMainTable(); });
+
+    // --- Logika Modal ---
+    const openModal = (category) => {
+        let title = ""; let colorClass = "";
+        if (category === 'cheaper') { title = "Daftar Lebih Murah (Diskon)"; colorClass = "bg-green-50"; }
+        else if (category === 'expensive') { title = "Daftar Mahal"; colorClass = "bg-red-50"; }
+        else if (category === 'not_found') { title = "Tidak Ditemukan"; colorClass = "bg-amber-50"; }
+
+        const modalHeader = document.getElementById('modalHeader');
+        modalHeader.className = `p-5 border-b border-slate-100 flex justify-between items-center ${colorClass}`;
+        document.getElementById('modalTitle').textContent = title;
+
+        modalRawData = analysisResults.filter(item => item.status === category);
+        document.getElementById('modalSearchInput').value = '';
+        
+        filterAndRenderModal();
+        document.getElementById('dataModal').classList.remove('hidden');
+    };
+
+    const closeModal = () => {
+        document.getElementById('dataModal').classList.add('hidden');
+    };
+
+    const filterAndRenderModal = () => {
+        const term = document.getElementById('modalSearchInput').value.toLowerCase();
+        
+        modalFilteredData = modalRawData.filter(item => 
+            item.productCode.toLowerCase().includes(term) ||
+            item.variationCode.toLowerCase().includes(term) ||
+            item.name.toLowerCase().includes(term) ||
+            item.sku1.toLowerCase().includes(term) ||
+            item.sku2.toLowerCase().includes(term)
+        );
+
+        const modalTableBody = document.getElementById('modalTableBody');
+        if (modalFilteredData.length === 0) {
+            modalTableBody.innerHTML = `<tr><td colSpan="6" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
+        } else {
+             modalTableBody.innerHTML = modalFilteredData.map(item => {
+                 let rowStr = generateRowHTMLShopee(item);
+                 return rowStr.replace(/<td class="py-2 px-3 align-top text-center w-12">[\s\S]*?<\/td>/, '');
+             }).join('');
+        }
+
+        document.getElementById('modalSubtitle').innerHTML = `Total ditemukan: <strong>${modalFilteredData.length}</strong> data`;
+    };
+
+    document.getElementById('modalSearchInput').addEventListener('input', filterAndRenderModal);
 
     // Mulai Ulang Aplikasi
     btnReset.addEventListener('click', () => {
