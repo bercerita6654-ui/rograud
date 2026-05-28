@@ -50,7 +50,7 @@
                 <div class="flex items-center gap-3 mb-4">
                     <div class="p-2 bg-[#ffedea] text-[#ee4d2d] rounded-lg"><i class="ph ph-file-xls text-xl"></i></div>
                     <div>
-                        <h2 class="font-semibold text-slate-800 text-sm">Data 1 (Harga Awal)</h2>
+                        <h2 class="font-semibold text-slate-800 text-sm">Data 1 (Harga Shopee)</h2>
                         <p class="text-xs text-slate-500">Mulai baris ke-7</p>
                     </div>
                 </div>
@@ -106,7 +106,7 @@
                 <div class="flex items-center gap-3 mb-4">
                     <div class="p-2 bg-teal-50 text-teal-600 rounded-lg"><i class="ph ph-file-xls text-xl"></i></div>
                     <div>
-                        <h2 class="font-semibold text-slate-800 text-sm">Data 2 (Shopee)</h2>
+                        <h2 class="font-semibold text-slate-800 text-sm">Data 2 (Campaign Shopee)</h2>
                         <p class="text-xs text-slate-500">Mulai baris ke-4 (3 Header)</p>
                     </div>
                 </div>
@@ -150,7 +150,7 @@
                 <div class="flex items-center gap-3 mb-4">
                     <div class="p-2 bg-purple-50 text-purple-600 rounded-lg"><i class="ph ph-database text-xl"></i></div>
                     <div>
-                        <h2 class="font-semibold text-slate-800 text-sm">Data 3 (AIO)</h2>
+                        <h2 class="font-semibold text-slate-800 text-sm">Data 3 (Stock List AIO)</h2>
                         <p class="text-xs text-slate-500">Opsional untuk HPP & Stok</p>
                     </div>
                 </div>
@@ -715,8 +715,8 @@
                     id: searchKey, 
                     productCode: rawProduct,
                     variationCode: rawVariation,
-                    d2ProdKey: d2ProdKey, // Menyimpan kode produk shopee
-                    d2VarKey: d2VarKey,   // Menyimpan kode variasi shopee
+                    d2ProdKey: d2ProdKey, 
+                    d2VarKey: d2VarKey,   
                     sku1: rawSku1,
                     sku2: rawSku2,
                     name: name1 || name2 || `${rawProduct} ${rawVariation}`,
@@ -928,10 +928,29 @@
         }
 
         let exportDataAOA = [];
-        // Tambahkan Kode Produk (Shopee) dan Kode Variasi (Shopee) dari Data 2
-        exportDataAOA.push(["SKU", "Nama Produk", "Merk", "Stok (qty)", "HPP", "Harga Shopee (Data 1)", "Harga Campaign (Data 2)", "Selisih Nominal (D2 vs D1)", "Persentase Selisih", "Kode Produk (Data 2 Shopee)", "Kode Variasi (Data 2 Shopee)"]);
+        exportDataAOA.push([
+            "SKU", 
+            "Kode Produk Shopee (Data 2)", 
+            "Nama Produk", 
+            "Merk", 
+            "Stok (qty)", 
+            "HPP", 
+            "Harga Shopee (Data 1)", 
+            "Harga Campaign (Data 2)", 
+            "Selisih Nominal (D1 & D2)", 
+            "Persentase Selisih"
+        ]);
 
-        const selectedItemsToExport = analysisResults.filter(item => selectedDataIds.has(item.id));
+        const selectedItemsToExport = analysisResults.filter(item => 
+            selectedDataIds.has(item.id) && 
+            item.d2ProdKey && item.d2ProdKey !== '' // Memastikan tidak ikut terunduh jika tidak punya kode produk dari data 2
+        );
+
+        if (selectedItemsToExport.length === 0) {
+            alert("Tidak ada data valid yang bisa diekspor. (Pastikan data yang dicentang tersedia di Data 2 / memiliki Kode Produk Shopee)");
+            return;
+        }
+
         selectedItemsToExport.forEach(item => {
             const targetHargaDiskon = Math.round(item.price1 - (item.price1 * (customDiscountVal / 100)));
             const finalHarga = item.price2 !== null ? item.price2 : targetHargaDiskon;
@@ -945,6 +964,7 @@
 
             exportDataAOA.push([
                 { t: 's', v: String(d3.sku || skuVal) },
+                { t: 's', v: String(item.d2ProdKey) },
                 d3.nama || item.name,
                 d3.merk || '-',
                 d3.qty || 0,
@@ -952,9 +972,7 @@
                 item.price1,
                 finalHarga,
                 diffValue,
-                `${diffPctValue.toFixed(2)}%`,
-                { t: 's', v: String(item.d2ProdKey || '') }, // Kode Produk Shopee (Data 2)
-                { t: 's', v: String(item.d2VarKey || '') }   // Kode Variasi Shopee (Data 2)
+                `${diffPctValue.toFixed(2)}%`
             ]);
         });
 
