@@ -222,7 +222,7 @@
                     <button id="tabShopeeBtn" class="py-2 px-4 border-b-2 border-[#ee4d2d] text-[#ee4d2d] font-bold text-sm transition-all focus:outline-none">
                         Tampilan Shopee
                     </button>
-                    <button id="tabAioBtn" class="py-2 px-4 border-b-2 border-transparent text-slate-500 hover:text-[#ee4d2d] font-medium text-sm transition-all focus:outline-none hidden">
+                    <button id="tabAioBtn" class="py-2 px-4 border-b-2 border-transparent text-slate-500 hover:text-[#ee4d2d] font-medium text-sm transition-all focus:outline-none">
                         Tampilan Data AIO
                     </button>
                 </div>
@@ -237,7 +237,7 @@
                         </div>
                         
                         <!-- Margin Filter -->
-                        <select id="selMarginFilter" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d] cursor-pointer text-slate-700 font-medium">
+                        <select id="selMarginFilter" class="hidden px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#ee4d2d] cursor-pointer text-slate-700 font-medium">
                             <option value="all">Semua Margin</option>
                             <option value="20">Target >= 20% (Kolom AB)</option>
                             <option value="15">Target >= 15% (Kolom X)</option>
@@ -259,9 +259,19 @@
                             <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
                             <input type="text" id="searchInput" placeholder="Cari SKU atau Nama..." class="w-full xl:w-56 pl-9 pr-4 py-1.5 border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#ee4d2d] bg-white" />
                         </div>
-                        <button id="btnExportExcel" class="px-3 py-1.5 bg-[#ee4d2d] text-white text-xs font-medium rounded-lg hover:bg-[#d73211] transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap">
-                            <i class="ph ph-file-xls"></i> Export Shopee (<span id="selectedCount">0</span>)
-                        </button>
+                        
+                        <!-- Buttons for Shopee View -->
+                        <div id="shopeeExportContainer" class="flex items-center gap-2">
+                            <label id="btnUploadData4" class="px-3 py-1.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-2 shadow-sm cursor-pointer whitespace-nowrap">
+                                <i class="ph ph-upload-simple"></i> Upload Data 4 (Hasil Sortir)
+                                <input type="file" id="inputFile4" class="hidden" accept=".xlsx, .xls, .csv" />
+                            </label>
+                            <button id="btnExportExcel" class="px-3 py-1.5 bg-[#ee4d2d] text-white text-xs font-medium rounded-lg hover:bg-[#d73211] transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap">
+                                <i class="ph ph-file-xls"></i> Export Shopee (<span id="selectedCount">0</span>)
+                            </button>
+                        </div>
+                        
+                        <!-- Buttons for AIO View -->
                         <button id="btnExportAIO" class="hidden px-3 py-1.5 bg-purple-600 text-white text-xs font-medium rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap">
                             <i class="ph ph-file-xls"></i> Export Data AIO
                         </button>
@@ -272,22 +282,16 @@
             <!-- Table Container (Scrollable) -->
             <div class="overflow-auto max-h-[600px] custom-scrollbar border-b border-slate-100 relative">
                 
-                <!-- View 1: Shopee Format -->
+                <!-- View 1: Shopee Format Murni -->
                 <table id="tableShopee" class="w-full text-left text-xs">
                     <thead class="bg-slate-50 text-slate-600 font-semibold sticky top-0 shadow-sm z-10 outline outline-1 outline-slate-100">
                         <tr>
                             <th class="py-3 px-3 bg-slate-50 align-top w-12 text-center">
-                                <input type="checkbox" id="selectAllCheckbox" class="checkbox-custom select-all-checkbox" title="Pilih Semua Data" />
+                                <input type="checkbox" class="checkbox-custom select-all-checkbox" title="Pilih Semua Data" />
                             </th>
                             <th class="py-3 px-3 bg-slate-50 align-top whitespace-normal min-w-[200px] leading-tight">Produk, Variasi<br/>& SKU</th>
-                            <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Harga Awal<br/><span class="font-normal text-[10px]">(Data 1)</span></th>
-                            <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Min Diskon<br/>yang diinginkan</th>
-                            <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Harga Pembanding<br/><span class="font-normal text-[10px]">(Data 2)</span></th>
-                            <th class="py-3 px-3 bg-slate-50 align-top w-24 whitespace-normal leading-tight">HPP<br/><span class="font-normal text-[10px]">(Modal)</span></th>
-                            <th class="py-3 px-3 bg-slate-50 align-top w-32 whitespace-normal leading-tight">
-                                Est. Profit<br/>& Margin
-                                <div class="text-[10px] text-slate-400 font-normal mt-0.5">Ref: Google Sheets / AIO</div>
-                            </th>
+                            <th class="py-3 px-3 bg-slate-50 align-top w-32 whitespace-normal leading-tight">Harga Shopee<br/><span class="font-normal text-[10px]">(Data 1)</span></th>
+                            <th class="py-3 px-3 bg-slate-50 align-top w-32 whitespace-normal leading-tight">Harga Campaign<br/><span class="font-normal text-[10px]">(Data 2)</span></th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="divide-y divide-slate-50">
@@ -300,7 +304,7 @@
                     <thead class="bg-purple-50 text-slate-600 font-semibold sticky top-0 shadow-sm z-10 outline outline-1 outline-purple-100">
                         <tr>
                             <th class="py-3 px-3 bg-purple-50 align-top w-12 text-center">
-                                <input type="checkbox" id="selectAllCheckboxAIO" class="checkbox-custom select-all-checkbox" title="Pilih Semua Data AIO" />
+                                <input type="checkbox" class="checkbox-custom select-all-checkbox" title="Pilih Semua Data AIO" />
                             </th>
                             <th class="py-3 px-3 bg-purple-50 align-top whitespace-normal min-w-[150px] leading-tight text-purple-900">SKU & Nama<br/><span class="font-normal text-[10px]">(Data 3 AIO)</span></th>
                             <th class="py-3 px-3 bg-purple-50 align-top w-24 whitespace-normal leading-tight text-purple-900">Kategori, Merk<br/>& Unit <span class="font-normal text-[10px]">(Data 3)</span></th>
@@ -329,43 +333,6 @@
     </div>
 </div>
 
-<!-- Modal Pop-up -->
-<div id="dataModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-opacity">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <!-- Modal Content -->
-        <div id="modalHeader" class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-            <div>
-                <h3 id="modalTitle" class="text-xl font-bold text-slate-800">Daftar Item</h3>
-                <p id="modalSubtitle" class="text-sm text-slate-500 mt-1">Total data: 0</p>
-            </div>
-            <button onclick="closeModal()" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                <i class="ph ph-x text-2xl"></i>
-            </button>
-        </div>
-        <div class="p-4 border-b border-slate-100 flex justify-between items-center gap-4">
-            <div class="relative w-full md:w-80">
-                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="modalSearchInput" placeholder="Cari..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#ee4d2d] bg-white" />
-            </div>
-        </div>
-        <div class="flex-1 overflow-auto custom-scrollbar relative">
-            <table class="w-full text-left text-xs">
-                <thead class="bg-slate-50 text-slate-600 font-medium sticky top-0 shadow-sm z-10 outline outline-1 outline-slate-100">
-                    <tr>
-                        <th class="py-3 px-3 bg-slate-50 align-top whitespace-normal min-w-[200px] leading-tight">Produk, Variasi<br/>& SKU</th>
-                        <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Harga Awal<br/><span class="font-normal text-[10px]">(Data 1)</span></th>
-                        <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Min Diskon<br/>yang diinginkan</th>
-                        <th class="py-3 px-3 bg-slate-50 align-top w-28 whitespace-normal leading-tight">Harga Pembanding<br/><span class="font-normal text-[10px]">(Data 2)</span></th>
-                        <th class="py-3 px-3 bg-slate-50 align-top w-24 whitespace-normal leading-tight">HPP<br/><span class="font-normal text-[10px]">(Modal)</span></th>
-                        <th class="py-3 px-3 bg-slate-50 align-top w-32 whitespace-normal leading-tight">Est. Profit & Margin</th>
-                    </tr>
-                </thead>
-                <tbody id="modalTableBody" class="divide-y divide-slate-50"></tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
 <script>
     // Pengaturan state
     let file1Data = []; 
@@ -373,6 +340,7 @@
     let file2FullData = []; 
     let file2SheetName = "Sheet1"; 
     let file3Data = []; 
+    let file4Data = []; // Untuk Hasil Sortir SKU
     let data3Map = new Map(); 
 
     let analysisResults = [];
@@ -398,6 +366,8 @@
     const inputFile1 = document.getElementById('inputFile1');
     const inputFile2 = document.getElementById('inputFile2');
     const inputFile3 = document.getElementById('inputFile3');
+    const inputFile4 = document.getElementById('inputFile4'); // Upload Data 4
+    
     const config1 = document.getElementById('config1');
     const config2 = document.getElementById('config2');
     const config3 = document.getElementById('config3');
@@ -409,6 +379,7 @@
     const uploadSection = document.getElementById('uploadSection');
     const btnReset = document.getElementById('btnReset');
     const searchInput = document.getElementById('searchInput');
+    
     const tableBody = document.getElementById('tableBody');
     const tableBodyAIO = document.getElementById('tableBodyAIO');
     const btnFilterAll = document.getElementById('btnFilterAll');
@@ -417,8 +388,12 @@
     const selMarginFilter = document.getElementById('selMarginFilter');
     const selMerkFilter = document.getElementById('selMerkFilter');
     const selKategoriFilter = document.getElementById('selKategoriFilter');
+    
     const btnExportExcel = document.getElementById('btnExportExcel');
     const btnExportAIO = document.getElementById('btnExportAIO');
+    const btnUploadData4Label = document.getElementById('btnUploadData4');
+    const shopeeExportContainer = document.getElementById('shopeeExportContainer');
+
     const mainCustomDiscount = document.getElementById('mainCustomDiscount');
     const missingFileWarning = document.getElementById('missingFileWarning');
     const selectedCountLabel = document.getElementById('selectedCount');
@@ -441,7 +416,6 @@
     const setupSelectAllCheckboxes = () => {
         const selectAllCheckboxes = document.querySelectorAll('.select-all-checkbox');
         selectAllCheckboxes.forEach(chk => {
-            // Hapus event listener lama dengan menukar node
             const newChk = chk.cloneNode(true);
             chk.parentNode.replaceChild(newChk, chk);
             
@@ -589,9 +563,19 @@
                     dropzone3.classList.add('hidden');
                     config3.classList.remove('hidden');
                     tabAioBtn.classList.remove('hidden');
+                } else if (fileIndex === 4) {
+                    // Upload Data 4 (Hasil Sortir SKU)
+                    file4Data = aoa.slice(1); // Asumsi baris ke-1 adalah Header
+                    btnUploadData4Label.innerHTML = `<i class="ph-fill ph-check-circle"></i> Data 4 Siap (${file4Data.length})`;
+                    btnUploadData4Label.classList.replace('bg-blue-50', 'bg-green-50');
+                    btnUploadData4Label.classList.replace('text-blue-600', 'text-green-600');
+                    
+                    btnExportExcel.innerHTML = `<i class="ph ph-file-xls"></i> Export Shopee (by Data 4)`;
+                    alert(`Data 4 berhasil dimuat (${file4Data.length} data). Meng-klik 'Export Shopee' akan mengabaikan kotak centang dan langsung memakai data acuan dari Data 4.`);
                 }
 
-                checkBothFilesLoaded();
+                if (fileIndex !== 4) checkBothFilesLoaded();
+                
             } catch (error) {
                 alert("Gagal membaca file. Pastikan formatnya valid .xlsx atau .csv");
                 console.error(error);
@@ -603,6 +587,7 @@
     inputFile1.addEventListener('change', (e) => processFile(e.target.files[0], 1));
     inputFile2.addEventListener('change', (e) => processFile(e.target.files[0], 2));
     inputFile3.addEventListener('change', (e) => processFile(e.target.files[0], 3));
+    inputFile4.addEventListener('change', (e) => processFile(e.target.files[0], 4));
 
     const checkBothFilesLoaded = () => {
         if (file1Data.length > 0 || file2Data.length > 0) {
@@ -718,7 +703,7 @@
                     hppModal: null, 
                     target10: 0, target15: 0, target20: 0,
                     profit: null, marginPctActual: null, potongan: null,
-                    diffPct, status // We don't store diff literal for Shopee View anymore
+                    diffPct, status
                 });
             });
 
@@ -749,6 +734,8 @@
 
                 selKategoriFilter.innerHTML = '<option value="all">Semua Kategori</option>';
                 [...uniqueKategoris].sort().forEach(k => { selKategoriFilter.innerHTML += `<option value="${k}">${k}</option>`; });
+                
+                selMarginFilter.classList.remove('hidden'); // Memunculkan filter margin di AIO
             }
 
             currentMainFilter = 'all';
@@ -835,10 +822,19 @@
         currentActiveTab = 'shopee';
         tabShopeeBtn.className = "py-2 px-4 border-b-2 border-[#ee4d2d] text-[#ee4d2d] font-bold text-sm transition-all focus:outline-none";
         tabAioBtn.className = "py-2 px-4 border-b-2 border-transparent text-slate-500 hover:text-[#ee4d2d] font-medium text-sm transition-all focus:outline-none";
+        
         tableShopee.classList.remove('hidden');
         tableAIO.classList.add('hidden');
-        btnExportExcel.classList.remove('hidden');
+        
+        shopeeExportContainer.classList.remove('hidden');
+        shopeeExportContainer.classList.add('flex');
+        
         btnExportAIO.classList.add('hidden');
+        
+        selMarginFilter.classList.add('hidden');
+        selKategoriFilter.classList.add('hidden');
+        selMerkFilter.classList.add('hidden');
+        
         renderActiveTable();
     });
 
@@ -846,51 +842,121 @@
         currentActiveTab = 'aio';
         tabAioBtn.className = "py-2 px-4 border-b-2 border-[#ee4d2d] text-[#ee4d2d] font-bold text-sm transition-all focus:outline-none";
         tabShopeeBtn.className = "py-2 px-4 border-b-2 border-transparent text-slate-500 hover:text-[#ee4d2d] font-medium text-sm transition-all focus:outline-none";
+        
         tableAIO.classList.remove('hidden');
         tableShopee.classList.add('hidden');
+        
+        shopeeExportContainer.classList.add('hidden');
+        shopeeExportContainer.classList.remove('flex');
+        
         btnExportAIO.classList.remove('hidden');
-        btnExportExcel.classList.add('hidden');
+        
+        selMarginFilter.classList.remove('hidden');
+        if (file3Data.length > 0) {
+            selKategoriFilter.classList.remove('hidden');
+            selMerkFilter.classList.remove('hidden');
+        }
+        
         renderActiveTable();
     });
 
-    // Ekspor Excel - Format Shopee Asli (Tanpa override harga baru)
+    // Ekspor Excel - Format Shopee Asli / Data 4
     btnExportExcel.addEventListener('click', () => {
-        if (selectedDataIds.size === 0) {
-            alert("Centang data pada tabel terlebih dahulu.");
-            return;
-        }
-
         let exportDataAOA = [];
+        // Menggunakan 3 Baris Header Secara Utuh
         for (let i = 0; i < 3; i++) {
             if (file2FullData[i]) exportDataAOA.push([...file2FullData[i]]);
         }
 
-        const selectedItemsToExport = analysisResults.filter(item => selectedDataIds.has(item.id));
-        selectedItemsToExport.forEach(item => {
-            const originalRow = file2Data.find(r => {
-                const prod = String(colConfig.vProd2 >= 0 ? r[colConfig.vProd2] : '').trim().toLowerCase();
-                const varC = String(colConfig.vVar2 >= 0 ? r[colConfig.vVar2] : '').trim().toLowerCase();
-                return prod === item.productCode.toLowerCase() && varC === item.variationCode.toLowerCase();
+        if (file4Data.length > 0) {
+            // MENGGUNAKAN DATA 4 SEBAGAI ACUAN UTAMA
+            file4Data.forEach(row4 => {
+                const sku4 = String(row4[0] || '').trim();
+                const d2ProdCode4 = String(row4[1] || '').trim();
+                const targetHargaDiskon = parsePrice(row4[7]);
+
+                // Cari kecocokan di analysisResults untuk mendapatkan info spesifik baris Data 2
+                const matchedItem = analysisResults.find(item => {
+                    const isProdMatch = item.d2ProdKey == d2ProdCode4;
+                    const sku5_4 = extract5DigitSKU(sku4);
+                    const sku5_1 = extract5DigitSKU(item.sku1);
+                    const sku5_2 = extract5DigitSKU(item.sku2);
+                    const isSkuMatch = (sku5_4 && (sku5_4 === sku5_1 || sku5_4 === sku5_2)) || (sku4 === item.sku1 || sku4 === item.sku2);
+                    return isProdMatch && isSkuMatch;
+                });
+
+                let originalRow = null;
+                if (matchedItem) {
+                    originalRow = file2FullData.find((r, idx) => {
+                        if(idx < 3) return false;
+                        const prod = String(colConfig.vProd2 >= 0 ? r[colConfig.vProd2] : '').trim();
+                        const varC = String(colConfig.vVar2 >= 0 ? r[colConfig.vVar2] : '').trim();
+                        return prod == matchedItem.d2ProdKey && varC == matchedItem.d2VarKey;
+                    });
+                } else {
+                    originalRow = file2FullData.find((r, idx) => {
+                        if(idx < 3) return false;
+                        const prod = String(colConfig.vProd2 >= 0 ? r[colConfig.vProd2] : '').trim();
+                        return prod == d2ProdCode4;
+                    });
+                }
+
+                if (originalRow) {
+                    let newRow = [...originalRow];
+                    while(newRow.length < file2FullData[0].length) newRow.push('');
+
+                    if (targetHargaDiskon > 0) {
+                        if(newRow[10] !== undefined) newRow[10] = targetHargaDiskon; 
+                        if(newRow[11] !== undefined) newRow[11] = targetHargaDiskon; 
+                    }
+
+                    if (colConfig.vProd2 >= 0 && newRow[colConfig.vProd2] !== undefined && newRow[colConfig.vProd2] !== '') {
+                        newRow[colConfig.vProd2] = { t: 's', v: String(newRow[colConfig.vProd2]) };
+                    }
+                    if (colConfig.vVar2 >= 0 && newRow[colConfig.vVar2] !== undefined && newRow[colConfig.vVar2] !== '') {
+                        newRow[colConfig.vVar2] = { t: 's', v: String(newRow[colConfig.vVar2]) };
+                    }
+
+                    exportDataAOA.push(newRow);
+                }
             });
 
-            if (originalRow) {
-                let newRow = [...originalRow];
-                while(newRow.length < file2FullData[0].length) newRow.push('');
-
-                // MEMPERTAHANKAN HARGA DARI DATA 2. 
-                // Tidak lagi menimpa newRow[10] dan newRow[11]
-
-                // Force tipe data String agar angka 0 (nol) di depan tidak dikonversi jadi number oleh Excel
-                if (colConfig.vProd2 >= 0 && newRow[colConfig.vProd2] !== undefined && newRow[colConfig.vProd2] !== '') {
-                    newRow[colConfig.vProd2] = { t: 's', v: String(newRow[colConfig.vProd2]) };
-                }
-                if (colConfig.vVar2 >= 0 && newRow[colConfig.vVar2] !== undefined && newRow[colConfig.vVar2] !== '') {
-                    newRow[colConfig.vVar2] = { t: 's', v: String(newRow[colConfig.vVar2]) };
-                }
-
-                exportDataAOA.push(newRow);
+            if (exportDataAOA.length <= 3) {
+                alert("Data 4 Anda tidak memiliki kecocokan yang valid dengan Data 2.");
+                return;
             }
-        });
+
+        } else {
+            // MENGGUNAKAN CHECKBOX MANUAL (Tanpa Data 4)
+            if (selectedDataIds.size === 0) {
+                alert("Centang data pada tabel atau upload Data 4 terlebih dahulu.");
+                return;
+            }
+
+            const selectedItemsToExport = analysisResults.filter(item => selectedDataIds.has(item.id));
+            selectedItemsToExport.forEach(item => {
+                const originalRow = file2Data.find(r => {
+                    const prod = String(colConfig.vProd2 >= 0 ? r[colConfig.vProd2] : '').trim().toLowerCase();
+                    const varC = String(colConfig.vVar2 >= 0 ? r[colConfig.vVar2] : '').trim().toLowerCase();
+                    return prod === item.productCode.toLowerCase() && varC === item.variationCode.toLowerCase();
+                });
+
+                if (originalRow) {
+                    let newRow = [...originalRow];
+                    while(newRow.length < file2FullData[0].length) newRow.push('');
+
+                    // Murni Shopee Export: Tidak Mengubah Harga! (Sesuai Permintaan Sebelumnya)
+                    if (colConfig.vProd2 >= 0 && newRow[colConfig.vProd2] !== undefined && newRow[colConfig.vProd2] !== '') {
+                        newRow[colConfig.vProd2] = { t: 's', v: String(newRow[colConfig.vProd2]) };
+                    }
+                    if (colConfig.vVar2 >= 0 && newRow[colConfig.vVar2] !== undefined && newRow[colConfig.vVar2] !== '') {
+                        newRow[colConfig.vVar2] = { t: 's', v: String(newRow[colConfig.vVar2]) };
+                    }
+
+                    exportDataAOA.push(newRow);
+                }
+            });
+        }
 
         const ws = XLSX.utils.aoa_to_sheet(exportDataAOA);
         const wb = XLSX.utils.book_new();
@@ -968,48 +1034,8 @@
 
     // --- HTML RENDERERS ---
 
-    // View Murni Tampilan Shopee
+    // View Murni Tampilan Shopee (Hanya menampilkan perbandingan Harga 1 & Harga 2)
     const generateRowHTMLShopee = (item) => {
-        let statusBadge = '';
-        if (item.status === 'not_found') statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700"><i class="ph ph-warning-circle"></i> Tdk Ditemukan</span>`;
-        else if (item.status === 'same') statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600"><i class="ph ph-minus"></i> Sama</span>`;
-        else if (item.status === 'cheaper') statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-green-50 text-green-700"><i class="ph ph-trend-down"></i> Diskon ${Math.abs(item.diffPct).toFixed(1)}%</span>`;
-        else if (item.status === 'expensive') statusBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-red-50 text-red-700"><i class="ph ph-trend-up"></i> Naik ${Math.abs(item.diffPct).toFixed(1)}%</span>`;
-
-        let hppHtml = item.hppModal === null ? `<i class="ph ph-spinner animate-spin text-slate-400"></i>` : `<span class="font-medium text-slate-700">${formatCurrency(item.hppModal)}</span>`;
-
-        let marginHtml = '-';
-        if (item.hppModal === null) {
-            marginHtml = `<div class="flex items-center gap-1 text-[10px] text-slate-400"><i class="ph ph-spinner animate-spin"></i> Loading...</div>`;
-        } else if (item.price2 !== null && item.hppModal > 0) {
-            const hJual = item.price2;
-            const profit = item.profit;
-            const potongan = item.potongan;
-            
-            let badgeClass = 'bg-red-100 text-red-700'; let badgeText = 'Rugi';
-            if (item.target20 > 0 && hJual >= item.target20) { badgeClass = 'bg-green-100 text-green-700'; badgeText = '>= 20%'; }
-            else if (item.target15 > 0 && hJual >= item.target15) { badgeClass = 'bg-blue-100 text-blue-700'; badgeText = '>= 15%'; }
-            else if (item.target10 > 0 && hJual >= item.target10) { badgeClass = 'bg-yellow-100 text-yellow-700'; badgeText = '>= 10%'; }
-            else if (profit > 0) { badgeClass = 'bg-orange-100 text-orange-700'; badgeText = '< 10%'; }
-
-            let targetTextHtml = '';
-            if (badgeText === '>= 20%' && item.target20 > 0) targetTextHtml = `<div class="text-[9px] mt-1 ${hJual >= item.target20 ? 'text-green-600' : 'text-red-600'}"> > ${formatCurrency(item.target20)}</div>`;
-            else if (badgeText === '>= 15%' && item.target15 > 0) targetTextHtml = `<div class="text-[9px] mt-1 ${hJual >= item.target15 ? 'text-green-600' : 'text-red-600'}"> > ${formatCurrency(item.target15)}</div>`;
-            else if (badgeText === '>= 10%' && item.target10 > 0) targetTextHtml = `<div class="text-[9px] mt-1 ${hJual >= item.target10 ? 'text-green-600' : 'text-red-600'}"> > ${formatCurrency(item.target10)}</div>`;
-
-            marginHtml = `
-                <div class="flex flex-col">
-                    <span class="${profit >= 0 ? 'text-green-600' : 'text-red-600'} font-medium">${profit > 0 ? '+' : ''}${formatCurrency(profit)}</span>
-                    <div class="flex items-center gap-1 mt-0.5">
-                        <span class="font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${item.marginPctActual.toFixed(1)}%</span>
-                        <span class="px-1 py-0.5 rounded text-[9px] font-bold ${badgeClass}">${badgeText}</span>
-                    </div>
-                    ${targetTextHtml}
-                    <span class="text-[9px] text-slate-400 mt-1 border-t border-slate-100 pt-0.5" title="Potongan: 26% (Admin 11%, Xtra 12.5%, Asuransi 0.5%, AMS 2%) + Rp 2.600 (Proses MP Rp 1.250, Jubelio Rp 350, Packing Rp 1.000)">Pot. ${formatCurrency(potongan)}</span>
-                </div>
-            `;
-        }
-
         const sku5_1 = extract5DigitSKU(item.sku1);
         const sku5_2 = extract5DigitSKU(item.sku2);
         const skusArr = [sku5_1, sku5_2].filter(Boolean);
@@ -1018,18 +1044,17 @@
 
         return `
             <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50">
-                <td class="py-2 px-3 align-top text-center w-12"><input type="checkbox" class="checkbox-custom row-checkbox" data-id="${item.id}" ${isChecked} onchange="toggleRowSelection(this, '${item.id}')" /></td>
-                <td class="py-2 px-3 align-top whitespace-normal min-w-[200px]">
+                <td class="py-3 px-3 align-top text-center w-12"><input type="checkbox" class="checkbox-custom row-checkbox" data-id="${item.id}" ${isChecked} onchange="toggleRowSelection(this, '${item.id}')" /></td>
+                <td class="py-3 px-3 align-top whitespace-normal min-w-[200px]">
                     <div class="font-semibold text-slate-800">${item.productCode}</div>
                     ${item.variationCode ? `<div class="font-medium text-[#ee4d2d]">${item.variationCode}</div>` : ''}
                     ${skus ? `<div class="text-[10px] text-slate-500 mt-0.5">SKU: ${skus}</div>` : ''}
                     <div class="text-[10px] text-slate-500 mt-0.5 line-clamp-2" title="${item.name}">${item.name}</div>
                 </td>
-                <td class="py-2 px-3 text-slate-600 align-top w-24">${formatCurrency(item.price1)}</td>
-                <td class="py-2 px-3 align-top w-24">${statusBadge}</td>
-                <td class="py-2 px-3 text-slate-600 align-top w-24">${item.price2 !== null ? formatCurrency(item.price2) : '-'}</td>
-                <td class="py-2 px-3 align-top w-20">${hppHtml}</td>
-                <td class="py-2 px-3 align-top w-32">${marginHtml}</td>
+                <td class="py-3 px-3 text-slate-600 align-top w-32 font-medium">${formatCurrency(item.price1)}</td>
+                <td class="py-3 px-3 align-top w-32">
+                    <div class="font-bold ${item.price2 !== null ? 'text-slate-800' : 'text-slate-400'}">${item.price2 !== null ? formatCurrency(item.price2) : '-'}</div>
+                </td>
             </tr>
         `;
     };
@@ -1100,7 +1125,7 @@
     const renderActiveTable = () => {
         const tBody = currentActiveTab === 'shopee' ? tableBody : tableBodyAIO;
         if (mainFilteredData.length === 0) {
-            const cols = currentActiveTab === 'shopee' ? 7 : 9;
+            const cols = currentActiveTab === 'shopee' ? 4 : 9;
             tBody.innerHTML = `<tr><td colSpan="${cols}" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
             updateCheckAllState();
             return;
@@ -1145,12 +1170,12 @@
             }
 
             let matchMerk = true;
-            if (merkT !== 'all') {
+            if (merkT !== 'all' && merkT !== undefined) {
                 if (!item.data3 || item.data3.merk !== merkT) matchMerk = false;
             }
 
             let matchKategori = true;
-            if (kategoriT !== 'all') {
+            if (kategoriT !== 'all' && kategoriT !== undefined) {
                 if (!item.data3 || item.data3.kategori !== kategoriT) matchKategori = false;
             }
             
@@ -1176,63 +1201,20 @@
     selKategoriFilter.addEventListener('change', (e) => { filterMainTable(); });
     searchInput.addEventListener('input', () => { filterMainTable(); });
 
-    // --- Logika Modal ---
-    const openModal = (category) => {
-        let title = ""; let colorClass = "";
-        if (category === 'cheaper') { title = "Daftar Lebih Murah (Diskon)"; colorClass = "bg-green-50"; }
-        else if (category === 'expensive') { title = "Daftar Mahal"; colorClass = "bg-red-50"; }
-        else if (category === 'not_found') { title = "Tidak Ditemukan"; colorClass = "bg-amber-50"; }
-
-        const modalHeader = document.getElementById('modalHeader');
-        modalHeader.className = `p-5 border-b border-slate-100 flex justify-between items-center ${colorClass}`;
-        document.getElementById('modalTitle').textContent = title;
-
-        modalRawData = analysisResults.filter(item => item.status === category);
-        document.getElementById('modalSearchInput').value = '';
-        
-        filterAndRenderModal();
-        document.getElementById('dataModal').classList.remove('hidden');
-    };
-
-    const closeModal = () => {
-        document.getElementById('dataModal').classList.add('hidden');
-    };
-
-    const filterAndRenderModal = () => {
-        const term = document.getElementById('modalSearchInput').value.toLowerCase();
-        
-        modalFilteredData = modalRawData.filter(item => 
-            item.productCode.toLowerCase().includes(term) ||
-            item.variationCode.toLowerCase().includes(term) ||
-            item.name.toLowerCase().includes(term) ||
-            item.sku1.toLowerCase().includes(term) ||
-            item.sku2.toLowerCase().includes(term)
-        );
-
-        const modalTableBody = document.getElementById('modalTableBody');
-        if (modalFilteredData.length === 0) {
-            modalTableBody.innerHTML = `<tr><td colSpan="6" class="py-12 text-center text-slate-500">Tidak ada data yang ditemukan.</td></tr>`;
-        } else {
-             modalTableBody.innerHTML = modalFilteredData.map(item => {
-                 let rowStr = generateRowHTMLShopee(item);
-                 return rowStr.replace(/<td class="py-2 px-3 align-top text-center w-12">[\s\S]*?<\/td>/, '');
-             }).join('');
-        }
-
-        document.getElementById('modalSubtitle').innerHTML = `Total ditemukan: <strong>${modalFilteredData.length}</strong> data`;
-    };
-
-    document.getElementById('modalSearchInput').addEventListener('input', filterAndRenderModal);
-
     // Mulai Ulang Aplikasi
     btnReset.addEventListener('click', () => {
-        file1Data = []; file2Data = []; file3Data = []; file2FullData = [];
-        input1.value = ''; input2.value = ''; input3.value = '';
+        file1Data = []; file2Data = []; file3Data = []; file4Data = []; file2FullData = [];
+        input1.value = ''; input2.value = ''; input3.value = ''; inputFile4.value = '';
         customDiscountVal = 5;
         if(mainCustomDiscount) mainCustomDiscount.value = '5';
         
         selectedDataIds.clear(); updateSelectedCount(); data3Map.clear();
         selMerkFilter.classList.add('hidden'); selKategoriFilter.classList.add('hidden');
+        
+        btnUploadData4Label.innerHTML = `<i class="ph ph-upload-simple"></i> Upload Data 4 (Hasil Sortir)`;
+        btnUploadData4Label.classList.replace('bg-green-50', 'bg-blue-50');
+        btnUploadData4Label.classList.replace('text-green-600', 'text-blue-600');
+        btnExportExcel.innerHTML = `<i class="ph ph-file-xls"></i> Export Shopee (<span id="selectedCount">0</span>)`;
         
         [dropzone1, dropzone2, dropzone3].forEach(d => d.classList.remove('hidden'));
         [config1, config2, config3].forEach(c => c.classList.add('hidden'));
