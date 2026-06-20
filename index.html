@@ -407,9 +407,9 @@
     let file2FullData = []; 
     let file2SheetName = "Sheet1"; 
     let file3Data = []; 
-    let file4Data = []; // Untuk Hasil Sortir SKU
+    let file4Data = []; 
     let data3Map = new Map(); 
-    let fetchedData1Wb = null; // Menyimpan G-Sheet WB
+    let fetchedData1Wb = null; 
 
     let analysisResults = [];
     let customDiscountVal = 5; 
@@ -614,7 +614,6 @@
             config1.classList.remove('hidden');
         } else if (fileIndex === 2) {
             const headerRow = aoa[0]; 
-            // file2SheetName and file2FullData are handled upstream
             file2Data = aoa.slice(3); 
             document.getElementById('fileName2').textContent = fileName;
             document.getElementById('rowCount2').textContent = `${file2Data.length} baris`;
@@ -1115,7 +1114,7 @@
             "HPP", 
             "Harga Shopee (Data 1)", 
             "Harga Campaign (Data 2)", 
-            "Selisih Nominal (D2 vs D1)", 
+            "Selisih Nominal (D1 & D2)", 
             "Persentase Selisih"
         ]);
 
@@ -1136,12 +1135,15 @@
             const diffValue = finalHarga - item.price1;
             const diffPctValue = item.price1 > 0 ? (diffValue / item.price1) * 100 : 0;
 
-            const skuVal = extract5DigitSKU(item.sku1) || extract5DigitSKU(item.sku2) || item.sku1;
+            const sku5_1 = extract5DigitSKU(item.sku1);
+            const sku5_2 = extract5DigitSKU(item.sku2);
             const d3 = item.data3 || {};
+            const d3_sku = extract5DigitSKU(d3.sku);
+            const skuVal = d3_sku || sku5_1 || sku5_2 || item.sku1 || '-';
             const hppInfo = d3.hpp !== undefined ? d3.hpp : (item.hppModal || 0);
 
             exportDataAOA.push([
-                { t: 's', v: String(d3.sku || skuVal) },
+                { t: 's', v: String(skuVal) },
                 { t: 's', v: String(item.d2ProdKey) },
                 d3.nama || item.name,
                 d3.merk || '-',
@@ -1224,13 +1226,16 @@
             </div>
         `;
 
-        const skuTampil = extract5DigitSKU(item.sku1) || extract5DigitSKU(item.sku2) || item.sku1 || '-';
+        const sku5_1 = extract5DigitSKU(item.sku1);
+        const sku5_2 = extract5DigitSKU(item.sku2);
+        const d3_sku = extract5DigitSKU(d3.sku);
+        const skuTampil = d3_sku || sku5_1 || sku5_2 || item.sku1 || '-';
 
         return `
             <tr class="hover:bg-purple-50/50 transition-colors border-b border-slate-50">
                 <td class="py-2 px-3 align-top text-center w-12"><input type="checkbox" class="checkbox-custom row-checkbox" data-id="${item.id}" ${isChecked} onchange="toggleRowSelection(this, '${item.id}')" /></td>
                 <td class="py-2 px-3 align-top whitespace-normal min-w-[150px]">
-                    <div class="font-bold text-purple-700">${d3.sku || skuTampil}</div>
+                    <div class="font-bold text-purple-700">${skuTampil}</div>
                     <div class="text-[10px] text-slate-600 mt-0.5 line-clamp-2">${d3.nama || item.name}</div>
                 </td>
                 <td class="py-2 px-3 align-top w-24">
